@@ -1,4 +1,4 @@
-<img src="./assets/logo.svg" width="64" height="64" alt="" />
+<img src="./assets/logo.svg" width="56" height="105" alt="" />
 
 # reflect
 
