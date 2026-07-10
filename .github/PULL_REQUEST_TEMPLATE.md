@@ -5,5 +5,5 @@
 ## Checklist
 
 - [ ] `SKILL.md` and `README.md` still describe the same behavior
-- [ ] This doesn't loosen the filter (see CONTRIBUTING.md) without justification
+- [ ] This doesn't loosen the filter (see CONTRIBUTING.md) without a good reason
 - [ ] `CHANGELOG.md` has an entry under `Unreleased`

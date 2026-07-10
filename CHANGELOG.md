@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-07-10
+
+### Changed
+
+- `README.md` and `CONTRIBUTING.md` rewritten in a warmer, narrative voice —
+  same documented behavior, no functional change. `SKILL.md` (the operational
+  spec Claude actually runs) is untouched.
+- `README.md`'s "Reliability & evals" section now shows the actual per-case
+  benchmark table and two concrete before/after examples from the eval
+  transcripts, instead of just a summary pass-rate claim.
+- Issue and PR templates given the same friendlier pass.
+
+### Added
+
+- `assets/reflecthero.png` — README header image.
+
 ## [0.3.0] - 2026-07-10
 
 ### Added
@@ -63,7 +79,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   assumptions, and user feedback, then proposes a curated set of auto-memory
   changes (add/edit/drop/fix) before writing anything.
 
-[Unreleased]: https://github.com/LorcanChinnock/reflect/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/LorcanChinnock/reflect/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/LorcanChinnock/reflect/compare/v0.3.0...v1.0.0
 [0.3.0]: https://github.com/LorcanChinnock/reflect/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/LorcanChinnock/reflect/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/LorcanChinnock/reflect/releases/tag/v0.1.0

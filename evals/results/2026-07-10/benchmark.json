@@ -1,19 +1,10 @@
 {
   "metadata": {
     "skill_name": "reflect",
-    "skill_path": "/Users/lorcan/dev/reflect",
     "executor_model": "claude-opus-4-8",
     "analyzer_model": "claude-opus-4-8",
     "timestamp": "2026-07-10T00:00:00Z",
-    "evals_run": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7
-    ],
+    "evals_run": [1, 2, 3, 4, 5, 6, 7],
     "runs_per_configuration": 1
   },
   "runs": [

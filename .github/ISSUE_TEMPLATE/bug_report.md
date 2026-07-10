@@ -1,19 +1,20 @@
 ---
 name: Bug report
-about: Something the skill did wrong
+about: reflect did something it shouldn't have (or missed something it should)
 title: ""
 labels: bug
 ---
 
 **What happened**
-A clear description of what `reflect` did.
+What did `reflect` actually do?
 
 **What you expected**
-What it should have done instead.
+What should it have done instead?
 
 **Session context**
-The relevant part of the session transcript, or a description of what the
-session covered, if you can share it.
+The part of the transcript where it went sideways, or a description of what
+the session covered, if that's easier to share. "It missed an obvious
+detour" is much easier to act on with the actual detour attached.
 
 **Environment**
 - Claude Code version:

@@ -1,42 +1,57 @@
 # Contributing
 
-Thanks for considering a contribution to `reflect`.
+Thanks for even considering this. `reflect` is small and opinionated on
+purpose, which means contributions matter more here than they would on
+something bigger — and also that some well-intentioned PRs are going to get
+pushback. Read on before you spend time on one.
 
 ## Reporting bugs
 
-Open an [issue](https://github.com/LorcanChinnock/reflect/issues) describing
-what you expected the skill to do, what it actually did, and (if you can
-share it) the relevant part of the session transcript.
+Open an [issue](https://github.com/LorcanChinnock/reflect/issues) that says
+what you expected `reflect` to do, what it actually did, and — if you can
+share it — the part of the session transcript where it went sideways. "It
+should have caught this detour and didn't" is a much more useful bug report
+than "it's not working," because it tells us exactly which side of the
+filter to look at.
 
 ## Proposing changes
 
-Open an issue before a pull request for anything beyond a typo fix — this is
-a small, opinionated skill, and a quick discussion saves a rewritten PR.
+For anything beyond a typo fix, open an issue before you open a PR. This
+project is small enough that a five-minute discussion up front will usually
+save you from writing a PR that gets rejected on a values disagreement
+rather than a code one.
 
-The one rule that matters: **`reflect` must stay lean.** Its entire purpose is
-to keep the memory store from becoming a landfill. A change that makes the
-skill write more, ask fewer questions before writing, or grow its own
-filtering logic works against that purpose and will get pushed back on, even
-if the change is well-intentioned. Prefer edits that make the filter
-*stricter* over ones that make it more permissive.
+Here's the value, and it's the one that actually matters: **`reflect` has to
+stay lean.** Its entire reason for existing is to keep the memory store from
+turning into a landfill nobody wants to load. So a change that makes it write
+more, second-guess itself less before writing, or grow its own bespoke
+filtering logic is going to get pushed back on by default — even if it's
+clean, well-tested, and clearly well-intentioned. If you're weighing two ways
+to fix something, send the one that makes the filter *stricter*.
 
-Routing a survivor to the project-instructions file is a sort applied *after*
-the filter, not a second inbox — a lesson must clear the same bar before it's
-routed anywhere, and that file must never become a way to write more than the
-filter already allows. `reflect` proposes and, at most, writes the working
-tree; it never stages, commits, pushes, or opens the PR itself.
+The project-instructions routing — writing into `CLAUDE.md` or `AGENTS.md` —
+is not a second inbox for things that didn't quite make the cut for memory.
+It's a sort applied *after* the same filter: a lesson has to clear the exact
+same recurring-and-non-obvious bar before `reflect` even asks which home it
+belongs in. And once it clears that bar, `reflect` still stops at the working
+tree — it never stages, commits, pushes, or opens a PR itself. That part
+stays a human decision, on purpose.
 
-Never add `context: fork` to `SKILL.md`. `reflect` works by reading the
-session transcript and memory index already in context — a forked subagent
-starts with neither and would silently produce empty or fabricated results.
-This has come up before as an "optimization" idea; it isn't one.
+One thing that keeps coming back as a "quick optimization" and genuinely
+isn't one: don't add `context: fork` to `SKILL.md`. `reflect` works entirely
+off the session transcript and memory index that are already sitting in
+context by the time it runs. A forked subagent starts with neither of those
+— it'd have nothing real to reflect on, and would either come back empty or
+quietly make something up. It looks like a speed win from the outside; from
+the inside it just breaks the skill.
 
 ## Pull requests
 
-- Keep the diff scoped to the change described in the linked issue.
-- Update `SKILL.md` and `README.md` together if behavior changes — they
-  should never describe different behavior.
-- Run the evals in `evals/evals.json` before and after your change (see
-  README's "Reliability & evals") and include the result in the PR
-  description. A change that regresses a passing case needs a strong reason.
-- Add a `CHANGELOG.md` entry under `Unreleased`.
+- Keep the diff scoped to what the linked issue describes.
+- If behavior changes, update `SKILL.md` and `README.md` together — they're
+  not allowed to describe two different skills.
+- Run the evals in `evals/evals.json` before and after your change (see the
+  README's "Reliability & evals" section) and paste the result into the PR
+  description. If a case that used to pass now fails, you'll need a genuinely
+  good reason for it.
+- Add a line to `CHANGELOG.md` under `Unreleased`.
