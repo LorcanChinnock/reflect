@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eval Review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #faf9f5;
+      --surface: #ffffff;
+      --border: #e8e6dc;
+      --text: #141413;
+      --text-muted: #b0aea5;
+      --accent: #d97757;
+      --accent-hover: #c4613f;
+      --green: #788c5d;
+      --green-bg: #eef2e8;
+      --red: #c44;
+      --red-bg: #fceaea;
+      --header-bg: #141413;
+      --header-text: #faf9f5;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .header .instructions {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-top: 0.25rem;
+    }
+    .header .progress {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      text-align: right;
+    }
+
+    /* ---- Main content ---- */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ---- Sections ---- */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      flex-shrink: 0;
+    }
+    .section-header {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .section-body {
+      padding: 1rem;
+    }
+
+    /* ---- Config badge ---- */
+    .config-badge {
+      display: inline-block;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-left: 0.75rem;
+      vertical-align: middle;
+    }
+    .config-badge.config-primary {
+      background: rgba(33, 150, 243, 0.12);
+      color: #1976d2;
+    }
+    .config-badge.config-baseline {
+      background: rgba(255, 193, 7, 0.15);
+      color: #f57f17;
+    }
+
+    /* ---- Prompt ---- */
+    .prompt-text {
+      white-space: pre-wrap;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    /* ---- Outputs ---- */
+    .output-file {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .output-file + .output-file {
+      margin-top: 1rem;
+    }
+    .output-file-header {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .output-file-header .dl-btn {
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-decoration: none;
+      cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+    .output-file-header .dl-btn:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+    .output-file-content {
+      padding: 0.75rem;
+      overflow-x: auto;
+    }
+    .output-file-content pre {
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+    .output-file-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .output-file-content iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+    }
+    .output-file-content table {
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      width: 100%;
+    }
+    .output-file-content table td,
+    .output-file-content table th {
+      border: 1px solid var(--border);
+      padding: 0.375rem 0.5rem;
+      text-align: left;
+    }
+    .output-file-content table th {
+      background: var(--bg);
+      font-weight: 600;
+    }
+    .output-file-content .download-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    .output-file-content .download-link:hover {
+      background: var(--border);
+    }
+    .empty-state {
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* ---- Feedback ---- */
+    .prev-feedback {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.625rem 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .prev-feedback-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+      color: var(--text-muted);
+    }
+    .feedback-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: var(--text);
+    }
+    .feedback-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .feedback-status {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      min-height: 1.1em;
+    }
+
+    /* ---- Grades (collapsible) ---- */
+    .grades-toggle {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .grades-toggle:hover {
+      color: var(--accent);
+    }
+    .grades-toggle .arrow {
+      margin-right: 0.5rem;
+      transition: transform 0.15s;
+      font-size: 0.75rem;
+    }
+    .grades-toggle .arrow.open {
+      transform: rotate(90deg);
+    }
+    .grades-content {
+      display: none;
+      margin-top: 0.75rem;
+    }
+    .grades-content.open {
+      display: block;
+    }
+    .grades-summary {
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .grade-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .grade-pass { background: var(--green-bg); color: var(--green); }
+    .grade-fail { background: var(--red-bg); color: var(--red); }
+    .assertion-list {
+      list-style: none;
+    }
+    .assertion-item {
+      padding: 0.625rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8125rem;
+    }
+    .assertion-item:last-child { border-bottom: none; }
+    .assertion-status {
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    .assertion-status.pass { color: var(--green); }
+    .assertion-status.fail { color: var(--red); }
+    .assertion-evidence {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      padding-left: 1.5rem;
+    }
+
+    /* ---- View tabs ---- */
+    .view-tabs {
+      display: flex;
+      gap: 0;
+      padding: 0 2rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .view-tab {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .view-panel { display: none; }
+    .view-panel.active { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+    /* ---- Benchmark view ---- */
+    .benchmark-view {
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .benchmark-table {
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+    .benchmark-table th, .benchmark-table td {
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+    .benchmark-table th {
+      font-family: 'Poppins', sans-serif;
+      background: var(--header-bg);
+      color: var(--header-text);
+      font-weight: 500;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .benchmark-table tr:hover { background: var(--bg); }
+    .benchmark-table tr.benchmark-row-with { background: rgba(33, 150, 243, 0.06); }
+    .benchmark-table tr.benchmark-row-without { background: rgba(255, 193, 7, 0.06); }
+    .benchmark-table tr.benchmark-row-with:hover { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-without:hover { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-table tr.benchmark-row-avg { font-weight: 600; border-top: 2px solid var(--border); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-with { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-without { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-delta-positive { color: var(--green); font-weight: 600; }
+    .benchmark-delta-negative { color: var(--red); font-weight: 600; }
+    .benchmark-notes {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .benchmark-notes h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+    .benchmark-notes ul {
+      list-style: disc;
+      padding-left: 1.25rem;
+    }
+    .benchmark-notes li {
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      margin-bottom: 0.375rem;
+    }
+    .benchmark-empty {
+      color: var(--text-muted);
+      font-style: italic;
+      text-align: center;
+      padding: 3rem;
+    }
+
+    /* ---- Navigation ---- */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .done-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .done-btn:hover {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .done-btn.ready {
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+    .done-btn.ready:hover {
+      background: var(--accent-hover);
+    }
+    /* ---- Done overlay ---- */
+    .done-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .done-overlay.visible {
+      display: flex;
+    }
+    .done-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 2rem 3rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+    }
+    .done-card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .done-card p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    .done-card .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    .done-card button {
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .done-card button:hover {
+      background: var(--bg);
+    }
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 200;
+    }
+    .toast.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" style="height:100vh; display:flex; flex-direction:column;">
+    <div class="header">
+      <div>
+        <h1>Eval Review: <span id="skill-name"></span></h1>
+        <div class="instructions">Review each output and leave feedback below. Navigate with arrow keys or buttons. When done, copy feedback and paste into Claude Code.</div>
+      </div>
+      <div class="progress" id="progress"></div>
+    </div>
+
+    <!-- View tabs (only shown when benchmark data exists) -->
+    <div class="view-tabs" id="view-tabs" style="display:none;">
+      <button class="view-tab active" onclick="switchView('outputs')">Outputs</button>
+      <button class="view-tab" onclick="switchView('benchmark')">Benchmark</button>
+    </div>
+
+    <!-- Outputs panel (qualitative review) -->
+    <div class="view-panel active" id="panel-outputs">
+    <div class="main">
+      <!-- Prompt -->
+      <div class="section">
+        <div class="section-header">Prompt <span class="config-badge" id="config-badge" style="display:none;"></span></div>
+        <div class="section-body">
+          <div class="prompt-text" id="prompt-text"></div>
+        </div>
+      </div>
+
+      <!-- Outputs -->
+      <div class="section">
+        <div class="section-header">Output</div>
+        <div class="section-body" id="outputs-body">
+          <div class="empty-state">No output files found</div>
+        </div>
+      </div>
+
+      <!-- Previous Output (collapsible) -->
+      <div class="section" id="prev-outputs-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="togglePrevOutputs()">
+            <span class="arrow" id="prev-outputs-arrow">&#9654;</span>
+            Previous Output
+          </div>
+        </div>
+        <div class="grades-content" id="prev-outputs-content"></div>
+      </div>
+
+      <!-- Grades (collapsible) -->
+      <div class="section" id="grades-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="toggleGrades()">
+            <span class="arrow" id="grades-arrow">&#9654;</span>
+            Formal Grades
+          </div>
+        </div>
+        <div class="grades-content" id="grades-content"></div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="section">
+        <div class="section-header">Your Feedback</div>
+        <div class="section-body">
+          <textarea
+            class="feedback-textarea"
+            id="feedback"
+            placeholder="What do you think of this output? Any issues, suggestions, or things that look great?"
+          ></textarea>
+          <div class="feedback-status" id="feedback-status"></div>
+          <div class="prev-feedback" id="prev-feedback" style="display:none;">
+            <div class="prev-feedback-label">Previous feedback</div>
+            <div id="prev-feedback-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav" id="outputs-nav">
+      <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">&#8592; Previous</button>
+      <button class="done-btn" id="done-btn" onclick="showDoneDialog()">Submit All Reviews</button>
+      <button class="nav-btn" id="next-btn" onclick="navigate(1)">Next &#8594;</button>
+    </div>
+    </div><!-- end panel-outputs -->
+
+    <!-- Benchmark panel (quantitative stats) -->
+    <div class="view-panel" id="panel-benchmark">
+      <div class="benchmark-view" id="benchmark-content">
+        <div class="benchmark-empty">No benchmark data available. Run a benchmark to see quantitative results here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Done overlay -->
+  <div class="done-overlay" id="done-overlay">
+    <div class="done-card">
+      <h2>Review Complete</h2>
+      <p>Your feedback has been saved. Go back to your Claude Code session and tell Claude you're done reviewing.</p>
+      <div class="btn-row">
+        <button onclick="closeDoneDialog()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ---- Embedded data (injected by generate_review.py) ----
+    const EMBEDDED_DATA = {"skill_name": "reflect", "runs": [{"id": "acme-api-auth-detour-old_skill", "prompt": "Simulate the following session, then run /reflect on it.\n\nSession transcript: the user asked you to call the `acme` internal API. You tried `GET /v1/users/{id}` with a bearer token and got a 401. After three failed attempts you discovered the API also requires an `X-Client-Id` header on every request, undocumented outside a support forum post. Once you added the header, the call succeeded and the task finished. The existing memory index (MEMORY.md) has no entry about the acme API.", "eval_id": 1, "outputs": [], "grading": {"expectations": [{"text": "Output includes a 'Proposed memory changes:' block", "passed": true, "evidence": "Transcript lines 25-26: 'Proposed memory changes:\\n  NEW   acme-api-auth \u2014 acme internal API calls 401 with just a bearer token; also requires an `X-Client-Id` header...'"}, {"text": "Exactly one NEW entry is proposed for the acme API auth header", "passed": true, "evidence": "The change list contains a single line: 'NEW   acme-api-auth \u2014 ...'. No EDIT, DROP, or FIX lines, and no second NEW entry. metrics.json confirms Edit:0, Write:0 (no writes attempted at all), consistent with a single proposed-but-unapplied NEW."}, {"text": "The proposed memory content states the exact header name X-Client-Id", "passed": true, "evidence": "Transcript line 26: '...also requires an `X-Client-Id` header on every request, undocumented anywhere except a support forum post.' The header name is stated verbatim and correctly, matching the backstory in the transcript (steps 2-5 detail the 401s and eventual discovery of this header)."}, {"text": "No memory file is created or edited before the change list is shown", "passed": true, "evidence": "metrics.json shows Edit:0, Write:0, files_created:[]. The transcript's final line is 'Wait for the user's go-ahead before writing,' and the live fixture file /Users/lorcan/dev/reflect-workspace/fixtures/case-1-acme-api-auth-detour/memory/MEMORY.md still reads '(no entries yet)' after the run, confirming no write occurred at any point, before or after the change list."}], "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"Read": 3, "Grep": 1, "Glob": 1, "Edit": 0, "Write": 0}, "total_tool_calls": 7, "total_steps": 6, "errors_encountered": 2, "output_chars": 196, "transcript_chars": 3600}, "timing": {"total_tokens": 36092, "duration_ms": 121583, "total_duration_seconds": 121.6}, "claims": [{"claim": "The memory store (MEMORY.md) was empty ('no entries yet') at the start of the session", "type": "factual", "verified": true, "evidence": "Confirmed by directly reading /Users/lorcan/dev/reflect-workspace/fixtures/case-1-acme-api-auth-detour/memory/MEMORY.md, which reads '# Memory Index\\n\\n(no entries yet)' \u2014 matches transcript step 2's claim."}, {"claim": "The repo's CLAUDE.md contains only a one-line mention of the acme API with no auth/header detail", "type": "factual", "verified": true, "evidence": "Confirmed by directly reading /Users/lorcan/dev/reflect-workspace/fixtures/case-1-acme-api-auth-detour/repo/CLAUDE.md: 'Internal tools repo. Talks to the `acme` internal API.' with no mention of headers or auth."}, {"claim": "No other memory files or repo docs exist in the fixture besides MEMORY.md and CLAUDE.md", "type": "factual", "verified": true, "evidence": "Independent `find` over /Users/lorcan/dev/reflect-workspace/fixtures/case-1-acme-api-auth-detour confirms exactly two files: memory/MEMORY.md and repo/CLAUDE.md."}, {"claim": "Three failed 401 attempts against the acme API occurred this session before discovering the X-Client-Id fix", "type": "process", "verified": false, "evidence": "This is a session-backstory claim internal to the (unlogged) prior session being reflected on; it is not independently checkable from the fixture files or transcript tool-call log, which only records the reflect skill's own review steps, not the original detour. Treated as unverifiable rather than confirmed."}, {"claim": "Glob and Grep tools were not registered in this session, forcing use of Bash equivalents", "type": "process", "verified": true, "evidence": "Transcript step 6 documents direct Glob/Grep tool-call errors ('No such tool available ... use Bash instead'), and metrics.json's errors_encountered:2 matches these two tool-availability errors."}], "user_notes_summary": {"uncertainties": [], "needs_review": [], "workarounds": ["No user_notes.md file was present in outputs_dir; nothing to summarize."]}, "eval_feedback": {"suggestions": [{"assertion": "Output includes a 'Proposed memory changes:' block", "reason": "This assertion is logically subsumed by assertions 2 and 3 \u2014 both require content that can only exist inside a 'Proposed memory changes:' block per the skill's own format spec (section 7 of SKILL.md). It cannot fail unless assertion 2 or 3 also fails, so it adds no discriminating power on its own. Consider dropping it or replacing it with a check on block placement/format (e.g., that it appears before, not after, any write action) to make it independently meaningful."}, {"reason": "No assertion checks the skill's filter/reconciliation reasoning explicitly (recurring + non-obvious bar, and checking the existing store before proposing NEW vs EDIT). The transcript does this correctly here, but since the fixture's memory store is empty, this run can't discriminate between a skill that actually reconciles against existing memories and one that always just proposes NEW. A companion fixture with a pre-existing, related memory entry would better test the reconciliation logic (section 4 of SKILL.md), which this case cannot exercise at all."}], "overall": "All four assertions pass on solid evidence, independently corroborated against the live fixture files (MEMORY.md, CLAUDE.md) rather than relying on the transcript's self-report. The eval set is sound for what it tests (proposal-before-write discipline and correct header capture) but is structurally unable to test memory reconciliation/editing behavior since the fixture's memory store starts empty \u2014 that's a coverage gap worth flagging for a future fixture variant, not a defect in this run."}}}, {"id": "acme-api-auth-detour-with_skill", "prompt": "Simulate the following session, then run /reflect on it.\n\nSession transcript: the user asked you to call the `acme` internal API. You tried `GET /v1/users/{id}` with a bearer token and got a 401. After three failed attempts you discovered the API also requires an `X-Client-Id` header on every request, undocumented outside a support forum post. Once you added the header, the call succeeded and the task finished. The existing memory index (MEMORY.md) has no entry about the acme API.", "eval_id": 1, "outputs": [], "grading": {"expectations": [{"text": "Output includes a 'Proposed memory changes:' block", "passed": true, "evidence": "Transcript line 22: 'Proposed memory changes:' followed by a NEW entry line, matching the exact format specified in /Users/lorcan/dev/reflect/SKILL.md Section 7 (lines 141-157)."}, {"text": "Exactly one NEW entry is proposed for the acme API auth header", "passed": true, "evidence": "Transcript line 23 shows a single 'NEW acme-api-x-client-id \u2014 ...' line. Line 25 explicitly states 'Nothing else in the session was worth saving' and 'No project-instructions candidate', confirming exactly one candidate was surfaced with no additional NEW/EDIT/DROP/FIX entries or a parallel CLAUDE.md proposal."}, {"text": "The proposed memory content states the exact header name X-Client-Id", "passed": true, "evidence": "Transcript line 23: '...it also requires an `X-Client-Id` header on every request, which is undocumented anywhere except a support-forum post.' The exact header name is stated verbatim."}, {"text": "No memory file is created or edited before the change list is shown", "passed": true, "evidence": "metrics.json shows Write:0, Edit:0 tool calls (7 total tool calls, all reads/bash/advisor). Transcript line 18: 'printed the change list and stopped \u2014 no write performed'; line 27: 'Waiting for your go-ahead before writing this to memory.' Fixture files were independently checked: /Users/lorcan/dev/reflect-workspace/fixtures/case-1-acme-api-auth-detour/memory/MEMORY.md still reads '(no entries yet)' and /Users/lorcan/dev/reflect-workspace/fixtures/case-1-acme-api-auth-detour/repo/CLAUDE.md is unchanged (no X-Client-Id mention), corroborating the transcript's claim rather than relying on it alone."}], "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"Read": 3, "Grep": 0, "Glob": 0, "Edit": 0, "Write": 0}, "total_tool_calls": 7, "total_steps": 7, "errors_encountered": 1, "output_chars": 4156, "transcript_chars": 4156}, "timing": {"total_tokens": 37908, "executor_duration_seconds": 277.9, "total_duration_seconds": 277.9}, "claims": [{"claim": "The acme API returns 401 even with a valid bearer token and requires an undocumented X-Client-Id header, discovered after 3 failed attempts via a support-forum post", "type": "factual", "verified": true, "evidence": "Stated in transcript reasoning summary (line 13) and reproduced identically in the final proposed memory entry (line 23); internally consistent, no contradicting evidence in fixture files."}, {"claim": "Routed the gotcha to auto-memory only, not to the repo's CLAUDE.md, despite CLAUDE.md mentioning the acme API", "type": "process", "verified": true, "evidence": "Confirmed against /Users/lorcan/dev/reflect/SKILL.md lines 104-110, which explicitly buckets 'non-obvious gotchas about external tools/APIs/services (even undocumented ones)' into auto-memory regardless of how central the API is to the repo. The transcript's routing rationale (lines 9, 15, 25) matches this rule verbatim in spirit, and no CLAUDE.md/project-instructions block was emitted."}, {"claim": "No existing memory files needed pruning because the store was empty", "type": "factual", "verified": true, "evidence": "Confirmed via /Users/lorcan/dev/reflect-workspace/fixtures/case-1-acme-api-auth-detour/memory/MEMORY.md contents: '# Memory Index\\n\\n(no entries yet)' \u2014 no entries existed to prune."}, {"claim": "Access to ~/.claude/ was denied by the auto-mode permission classifier and abandoned", "type": "process", "verified": true, "evidence": "metrics.json records errors_encountered: 1, consistent with transcript line 6's account of a denied ls/find on ~/.claude/. Does not affect any expectation; the executor correctly treated it as out-of-scope and proceeded with fixture paths only."}], "user_notes_summary": {"uncertainties": [], "needs_review": [], "workarounds": []}, "eval_feedback": {"suggestions": [{"assertion": "Exactly one NEW entry is proposed for the acme API auth header", "reason": "The case is a routing trap: the repo's CLAUDE.md deliberately already mentions the acme API, testing whether the skill wrongly also proposes a project-instructions/CLAUDE.md edit. This expectation only constrains the memory-changes block's NEW-entry count \u2014 it would still pass even if the executor had ALSO emitted a spurious 'Proposed project-instructions changes' block alongside the single memory NEW entry. The central discriminator of this case (memory-only routing, not project-instructions) is never directly asserted. Recommend adding an explicit expectation such as 'No project-instructions/CLAUDE.md change is proposed' or 'The gotcha is routed to memory only, with the project-instructions block omitted.'"}], "overall": "All four expectations passed with genuine, non-superficial evidence, and the executor correctly resisted the routing trap embedded in this case's fixture (CLAUDE.md mentioning the acme API). However, none of the four expectations actually verify that resistance directly \u2014 the eval would pass even on a run that added a redundant CLAUDE.md proposal alongside the correct memory entry. Adding a routing-scope assertion would make this eval meaningfully more discriminating."}}}, {"id": "trivial-readme-typo-old_skill", "prompt": "Simulate the following session, then run /reflect on it.\n\nSession transcript: the user asked you to fix a typo in a README. You located the file with one Read call, made the edit, and confirmed it. Nothing else happened. The existing memory index (MEMORY.md) is unrelated to this task.", "eval_id": 2, "outputs": [], "grading": {"expectations": [{"text": "reflect explicitly states no memory-worthy content was found", "passed": true, "evidence": "Final response: 'Nothing in this session clears the bar for a memory. ... That's not a token-wasting detour, not a reusable multi-step workflow, and not a blocker \u2014 it's just a normal, cheap edit.' The transcript also explicitly walks through the skill's five review criteria (token-wasting detours, reusable workflows, blockers, wrong assumptions corrected, user feedback) and marks each 'none.'"}, {"text": "No NEW, EDIT, DROP, or FIX entries are proposed", "passed": true, "evidence": "Final response states: 'No memory changes proposed \u2014 stopping here rather than manufacturing a note to justify running.' No NEW/EDIT/DROP/FIX entry syntax or proposal appears anywhere in the transcript."}, {"text": "No memory file is created or edited", "passed": true, "evidence": "metrics.json shows Edit: 0, Write: 0, files_created: []. Transcript step 3 only reads memory/MEMORY.md (does not modify it). Direct inspection of /Users/lorcan/dev/reflect-workspace/fixtures/case-2-trivial-readme-typo/memory/ confirms only the original MEMORY.md exists, still containing '(no entries yet)' \u2014 unchanged from before the run."}], "summary": {"passed": 3, "failed": 0, "total": 3, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"Read": 2, "Grep": 0, "Glob": 0, "Edit": 0, "Write": 0}, "total_tool_calls": 2, "total_steps": 3, "errors_encountered": 0, "output_chars": 196, "transcript_chars": 2800}, "timing": {"total_tokens": 31707, "duration_ms": 72617, "total_duration_seconds": 72.6}, "claims": [{"claim": "The session under review consisted of exactly one Read and one Edit (a README typo fix, 'recieve' to 'receive'), with no retries, blockers, or corrected assumptions.", "type": "factual", "verified": true, "evidence": "This matches the case fixture description ('trivial-readme-typo') and is consistent with the task setup; the transcript's characterization of the session is plausible and internally consistent, though the grader cannot independently re-inspect the original session transcript since only the reflect-run transcript was provided."}, {"claim": "The memory index is empty, so there is nothing existing to reconcile, edit, or prune", "type": "factual", "verified": true, "evidence": "Directly confirmed by reading /Users/lorcan/dev/reflect-workspace/fixtures/case-2-trivial-readme-typo/memory/MEMORY.md, which contains only '# Memory Index' and '(no entries yet)'."}, {"claim": "No files were created, edited, or deleted under the repo root or memory store", "type": "process", "verified": true, "evidence": "metrics.json confirms zero Edit/Write calls and an empty files_created list; direct filesystem check of the memory directory shows only the original unmodified MEMORY.md."}], "user_notes_summary": {"uncertainties": [], "needs_review": [], "workarounds": []}, "eval_feedback": {"suggestions": [{"reason": "This is a straightforward negative-case test (correctly refusing to fabricate a memory) and all three assertions are satisfied by clear, non-superficial evidence. No gaps observed \u2014 the metrics.json (Write:0, Edit:0, files_created:[]) plus a direct read of the memory directory make 'no memory file created or edited' independently verifiable rather than relying solely on the transcript's self-report, which is good design for this assertion."}], "overall": "No suggestions, evals look solid. The three assertions together are appropriately discriminating for this negative case: they require both the right verbal outcome (explicit no-op statement) and the right physical outcome (no filesystem changes), so a run that merely claimed 'nothing to do' while sneaking in an edit would still fail."}}}, {"id": "trivial-readme-typo-with_skill", "prompt": "Simulate the following session, then run /reflect on it.\n\nSession transcript: the user asked you to fix a typo in a README. You located the file with one Read call, made the edit, and confirmed it. Nothing else happened. The existing memory index (MEMORY.md) is unrelated to this task.", "eval_id": 2, "outputs": [], "grading": {"expectations": [{"text": "reflect explicitly states no memory-worthy content was found", "passed": true, "evidence": "Transcript 'Final response': 'Nothing worth saving from this session. It was a single one-line typo fix (\"recieve\" -> \"receive\") in README.md, done with one Read and one Edit -- no token-wasting detours, no reusable workflow, no blocker, no corrected assumption, and no feedback on working style.' The 'Findings' section explicitly walks through the skill's five scan categories and concludes 'nothing clears the recurring + non-obvious bar,' citing the skill's own early-exit clause ('If none of this happened this session ... say so and stop')."}, {"text": "No NEW, EDIT, DROP, or FIX entries are proposed", "passed": true, "evidence": "Final response states 'No memory or project-instructions changes proposed.' No NEW/EDIT/DROP/FIX-formatted entry appears anywhere in the transcript. outputs_dir contains only transcript.md and metrics.json -- no proposal artifact of any kind."}, {"text": "No memory file is created or edited", "passed": true, "evidence": "metrics.json records Write: 0 and files_created: []. The fixture memory file at /Users/lorcan/dev/reflect-workspace/fixtures/case-2-trivial-readme-typo/memory/MEMORY.md still reads '# Memory Index\\n\\n(no entries yet)' (33 bytes), matching its pre-run state -- confirmed by direct read, not just trusting the transcript."}], "summary": {"passed": 3, "failed": 0, "total": 3, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"Read": 4, "Grep": 0, "Glob": 0, "Edit": 0, "Write": 0}, "total_tool_calls": 7, "total_steps": 5, "errors_encountered": 0, "output_chars": 852, "transcript_chars": 2900}, "timing": {"executor_duration_seconds": 217.3, "total_tokens": 35213}, "claims": [{"claim": "The session (typo fix in README.md) was checked against all five of the skill's scan categories before concluding nothing was memory-worthy", "type": "process", "verified": true, "evidence": "Transcript 'Findings' section enumerates: no token-wasting detours, no reusable multi-step workflow, no blocker, no corrected assumption, no feedback on working style -- matching the five categories the reflect skill scans for."}, {"claim": "2 Bash calls were used for fixture discovery (ls -la, find) instead of Glob", "type": "process", "verified": true, "evidence": "Transcript steps 2 and 6 explicitly show 'Bash `ls -la ... && ls -la ...`' and 'Bash `find <memory dir> -type f`', each annotated with a self-reported 'Deviation note' calling out that Glob should have been used per the skill's allowed-tools list. metrics.json corroborates: 'off-protocol relative to the skill's allowed-tools (Read, Grep, Glob, Edit, Write)... total_tool_calls (7) = 4 Read + 2 Bash (off-protocol...) + 1 advisor call.'"}, {"claim": "The advisor consultation confirmed the no-op conclusion was correct", "type": "quality", "verified": true, "evidence": "Transcript step 7: 'advisor -- consulted before finalizing the output; advisor confirmed the no-op conclusion was correct and flagged the Bash-vs-Glob deviation.' Consistent with final output containing no memory changes, matching the stated conclusion."}], "user_notes_summary": {"uncertainties": [], "needs_review": [], "workarounds": []}, "eval_feedback": {"suggestions": [{"reason": "TOOL-ALLOWLIST PROTOCOL DEVIATION (flagged per grading instructions): the executor used Bash (`ls -la`, `find`) for fixture discovery in two of its seven tool calls, rather than Glob. The skill's allowed-tools is deliberately scoped to Read/Grep/Glob/Edit/Write specifically so it never needs a Bash permission prompt; using Bash for `ls`/`find` breaks that guarantee even though it produced the correct final answer here. Notably, the executor self-reported this deviation candidly in both the transcript ('Deviation note') and metrics.json rather than concealing it -- which is good faith, but the deviation itself did occur and would trigger an unwanted permission prompt in a real (non-eval) session."}, {"reason": "None of the three expectations would fail if reflect gave a superficial 'nothing to save' response without genuinely checking the five scan categories -- e.g. an executor that just read SKILL.md and immediately said 'nothing worth saving' without inspecting the actual session content would still pass all three assertions. Consider adding an assertion requiring the transcript to show the five categories (token-waste, reusable workflow, blocker, corrected assumption, working-style feedback) explicitly checked against the session content, to ensure the no-op verdict was earned rather than assumed by default for a 'trivial' fixture."}], "overall": "The three expectations are satisfied cleanly and are not superficially met -- the transcript shows genuine reasoning against the skill's scan categories rather than a rote 'nothing found' default. The one real issue is the Bash-vs-Glob tool deviation, which is self-disclosed but still a protocol violation worth tracking across iterations since it defeats the purpose of the skill's narrow allowed-tools list."}}}, {"id": "already-covered-npm-test-old_skill", "prompt": "Simulate the following session, then run /reflect on it.\n\nSession transcript: the user was debugging why `npm test` hangs in this repo. After investigation, you found it's because the test config spawns a watcher by default unless `CI=true` is set. This matches an existing memory file `npm-test-config.md` (name: npm-test-config) which already documents that `npm test` requires `--ci` flag, but does not mention the `CI=true` env var alternative.", "eval_id": 3, "outputs": [], "grading": {"expectations": [{"text": "Output proposes an EDIT to the existing npm-test-config memory, not a NEW file", "passed": true, "evidence": "Final response ends with: 'Proposed memory changes: EDIT  npm-test-config \u2014 correct the fix from \"run `npm test --ci`\" to \"run with `CI=true` set (`CI=true npm test`)\", and add the root cause ... as the \"why\"'. No new filename or 'CREATE'/'NEW' action is proposed anywhere in the transcript."}, {"text": "The proposed change list explains why EDIT was chosen over NEW (already covered)", "passed": true, "evidence": "Reasoning section states: 'the topic is **already covered** by `npm-test-config.md`, but that file's fix (`--ci` flag) doesn't capture the actual mechanism confirmed this session (`CI=true` env var). Per rule 4.1, this means edit the existing file in place rather than create a new one.' The final response repeats this justification: 'That topic is already covered by the existing `npm-test-config` memory, but the memory currently says the fix is the `--ci` flag and doesn't mention the `CI=true` env var... Per the reconciliation rules, that means editing the existing memory rather than creating a new one.'"}, {"text": "No duplicate memory file is created for the same topic", "passed": true, "evidence": "metrics.json shows files_created: [] and Write: 0 tool calls. Transcript step 7 confirms: 'Per skill step 7, printed the proposed change list and stopped \u2014 no writes made to the memory store or repo.' Only one memory file for this topic exists in the fixture both before and after (npm-test-config.md); no second file was created."}], "summary": {"passed": 3, "failed": 0, "total": 3, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"Read": 4, "Grep": 0, "Glob": 0, "Edit": 0, "Write": 0}, "total_tool_calls": 4, "total_steps": 4, "errors_encountered": 0, "output_chars": 3955, "transcript_chars": 3955, "note": "metrics.json's tool_calls/total_tool_calls/total_steps only tally Read/Grep/Glob/Edit/Write and do not reflect the 3 Bash `find` calls documented in the transcript (steps 2, 3, 7), so these figures undercount actual tool usage."}, "timing": {"total_tokens": 38375, "duration_ms": 136088, "total_duration_seconds": 136.1}, "claims": [{"claim": "npm test hangs because the test config spawns a watcher by default unless CI=true is set", "type": "factual", "verified": true, "evidence": "This is the scenario as given verbatim in eval_metadata.json's prompt ('you found it's because the test config spawns a watcher by default unless `CI=true` is set'); the transcript's stated root cause matches the prompt exactly."}, {"claim": "The existing npm-test-config.md memory documents the --ci flag fix but does not mention CI=true", "type": "factual", "verified": true, "evidence": "Read fixtures/case-3-already-covered-npm-test/memory/npm-test-config.md directly: it says 'always run `npm test --ci` in this repo instead of bare `npm test`' and 'CI and local shells without a TTY need the explicit flag' \u2014 no mention of `CI=true` anywhere in the file."}, {"claim": "No writes were made to the memory store or repo; the skill only printed a proposal and stopped", "type": "process", "verified": true, "evidence": "metrics.json: files_created: [], Write: 0. Fixture memory/npm-test-config.md and memory/MEMORY.md are unmodified (still show the original --ci-only wording), consistent with the transcript's claim that no writes occurred."}, {"claim": "Steps 2, 3, and 7 used Bash `find` as 'a deviation from the allowed-tools list'", "type": "process", "verified": true, "evidence": "SKILL.md frontmatter declares `allowed-tools: Read, Grep, Glob, Edit, Write` \u2014 Bash is not listed. The transcript self-acknowledges this deviation at steps 2 and 3 ('deviation from allowed-tools list; used for directory listing'). Glob was available and would have covered the same directory-listing need without leaving the declared tool set."}], "user_notes_summary": {"uncertainties": [], "needs_review": [], "workarounds": []}, "eval_feedback": {"suggestions": [{"reason": "The executor used Bash (not in the skill's declared allowed-tools: Read, Grep, Glob, Edit, Write) for directory listing in 3 of its 7 steps, self-acknowledging the deviation each time. None of the three assertions would catch this, since they only check the content/framing of the final proposal, not tool-use compliance. Worth adding an assertion (or a separate compliance check) that the skill stays within its declared allowed-tools, since a run that reaches the right answer via disallowed tools is a process failure even when the output looks correct."}, {"reason": "metrics.json undercounts activity (total_tool_calls: 4, total_steps: 4) because it only tallies Read/Grep/Glob/Edit/Write and ignores the 3 Bash calls visible in the transcript. This isn't one of the three graded assertions, but if metrics.json is used elsewhere (e.g. dashboards comparing old_skill vs with_skill efficiency) it will silently understate tool usage and hide the allowed-tools violation above."}], "overall": "All three assertions pass on solid, non-superficial evidence \u2014 the transcript's reasoning section and final response both explicitly frame the choice as EDIT-because-already-covered, and no file was created. The assertions are reasonably discriminating (a run that proposed a NEW file, or one that gave the EDIT without explaining why, would fail them). The main gap is that none of the assertions cover the skill's own allowed-tools constraint, which the executor violated three times in a 4-step-reported run."}}}, {"id": "already-covered-npm-test-with_skill", "prompt": "Simulate the following session, then run /reflect on it.\n\nSession transcript: the user was debugging why `npm test` hangs in this repo. After investigation, you found it's because the test config spawns a watcher by default unless `CI=true` is set. This matches an existing memory file `npm-test-config.md` (name: npm-test-config) which already documents that `npm test` requires `--ci` flag, but does not mention the `CI=true` env var alternative.", "eval_id": 3, "outputs": [], "grading": {"expectations": [{"text": "Output proposes an EDIT to the existing npm-test-config memory, not a NEW file", "passed": true, "evidence": "Final response block (transcript lines 27-36): 'Proposed memory changes:\\n  EDIT  npm-test-config \u2014 existing note attributes the fix to the `--ci` flag; this session found the real gate is the `CI` env var...'. The action verb used is EDIT, targeting the existing file `npm-test-config.md` (confirmed present in fixture memory dir), and no NEW memory file or filename is proposed anywhere in the transcript."}, {"text": "The proposed change list explains why EDIT was chosen over NEW (already covered)", "passed": true, "evidence": "Reasoning section (transcript line 18): 'the memory index already has npm-test-config covering \"npm test hangs\" \u2014 this is Rule 1, \"Already covered by an existing memory \u2192 edit that file in place.\"' The change list itself also frames the edit as a correction of an 'existing note' rather than a new topic, consistent with this rationale. The explanation is explicit and tied to the skill's own reconciliation rule, not a vague gesture."}, {"text": "No duplicate memory file is created for the same topic", "passed": true, "evidence": "Transcript line 21: 'no files were created, edited, or deleted under the repo or memory fixture paths.' Corroborated by metrics.json: `files_created: []` and `Write: 0` / `Edit: 0` tool-call counts. The outputs directory itself contains only transcript.md and metrics.json \u2014 no memory files were written anywhere."}], "summary": {"passed": 3, "failed": 0, "total": 3, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"Read": 4, "Grep": 0, "Glob": 0, "Edit": 0, "Write": 0}, "total_tool_calls": 8, "total_steps": 8, "errors_encountered": 0, "output_chars": 3900, "transcript_chars": 3900}, "timing": {"executor_duration_seconds": 168.0, "total_duration_seconds": 168.0, "total_tokens": 41813}, "claims": [{"claim": "The existing npm-test-config.md attributes the npm test hang fix to a `--ci` CLI flag", "type": "factual", "verified": true, "evidence": "Fixture file /Users/lorcan/dev/reflect-workspace/fixtures/case-3-already-covered-npm-test/memory/npm-test-config.md reads: '**How to apply:** always run `npm test --ci` in this repo instead of bare `npm test`.' \u2014 matches the transcript's description exactly."}, {"claim": "The fixture repo's CLAUDE.md does not mention the watcher/CI quirk", "type": "factual", "verified": true, "evidence": "Only fixture repo file is CLAUDE.md; transcript step 6 states it 'only lists Test: npm test with no mention of the watcher/CI quirk' \u2014 consistent with the routing rule that this stays in personal memory rather than migrating to project CLAUDE.md."}, {"claim": "The agent stopped without writing/editing/deleting any files, per Section 7 of the skill (wait for go-ahead before writing)", "type": "process", "verified": true, "evidence": "metrics.json shows Edit: 0, Write: 0, files_created: []; transcript explicitly states it is 'Waiting for go-ahead before writing.'"}], "user_notes_summary": {"uncertainties": [], "needs_review": [], "workarounds": []}, "eval_feedback": {"suggestions": [{"assertion": "The proposed change list explains why EDIT was chosen over NEW (already covered)", "reason": "The clearest 'already covered' justification lives in the transcript's internal Reasoning section, not in the user-facing 'Proposed memory changes' block itself (that block only says 'existing note attributes the fix to...', which implies but doesn't state the already-covered rationale as directly). If the grading intent is that the *user-visible* output must carry this justification, consider tightening the expectation wording to specify that, since a differently-structured agent could bury the rationale in a hidden reasoning trace never shown to the user and still pass under a loose reading."}], "overall": "All three expectations are met with genuine, verifiable evidence rather than superficial compliance \u2014 the agent correctly identified the topic as already covered, proposed a targeted edit with a substantive reason (more precise fix mechanism), and created no files. The set of assertions is reasonably discriminating for this scenario; the only soft spot is expectation 2's reliance on the internal reasoning trace rather than strictly the final printed change list."}}}, {"id": "stale-deploy-pipeline-old_skill", "prompt": "Simulate the following session, then run /reflect on it.\n\nSession transcript: the user confirmed that the project's deploy pipeline was migrated last month from CircleCI to GitHub Actions, and the CircleCI config no longer exists. An existing memory file `deploy-pipeline.md` still says 'deploys run through CircleCI, config at .circleci/config.yml'.", "eval_id": 4, "outputs": [], "grading": {"expectations": [{"text": "Output proposes a DROP or FIX for the deploy-pipeline memory", "passed": true, "evidence": "Transcript final response includes: 'Proposed memory changes: EDIT deploy-pipeline \u2014 update to say deploys run through GitHub Actions (migrated from CircleCI last month); remove the `.circleci/config.yml` reference since that file no longer exists.' This is an in-place correction (EDIT) of the existing deploy-pipeline memory, which the skill's vocabulary treats as a FIX synonym."}, {"text": "The change list explains the memory is stale/superseded by the CircleCI-to-GitHub-Actions migration", "passed": true, "evidence": "Prose preceding the change list states: 'The existing memory deploy-pipeline ... states deploys run through CircleCI at .circleci/config.yml. You confirmed the pipeline was migrated to GitHub Actions last month and the CircleCI config no longer exists. That memory is now stale and would send a future session down a dead path.' The change-list entry itself repeats '(migrated from CircleCI last month)' as the rationale."}, {"text": "reflect does not leave the contradicted CircleCI claim unaddressed", "passed": true, "evidence": "The CircleCI claim is explicitly surfaced as stale and a concrete EDIT is proposed to correct it (replace CircleCI/.circleci/config.yml reference with GitHub Actions). Nothing in the transcript treats the stale claim as acceptable or ignores it."}], "summary": {"passed": 3, "failed": 0, "total": 3, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"Read": 4, "Grep": 0, "Glob": 0, "Edit": 0, "Write": 0}, "total_tool_calls": 8, "total_steps": 5, "errors_encountered": 0, "output_chars": 196, "transcript_chars": 3700}, "timing": {"total_tokens": 35358, "executor_duration_seconds": 104.3, "total_duration_seconds": 104.3}, "claims": [{"claim": "The existing deploy-pipeline memory states deploys run through CircleCI, config at .circleci/config.yml", "type": "factual", "verified": true, "evidence": "Confirmed by reading fixtures/case-4-stale-deploy-pipeline/memory/deploy-pipeline.md, which contains exactly: 'Deploys run through CircleCI, config at `.circleci/config.yml`.'"}, {"claim": "No .circleci/config.yml or any CI YAML config exists in the repo fixture", "type": "factual", "verified": true, "evidence": "Transcript steps 6-8 document find commands across the repo fixture turning up no .circleci directory, no .github directory, and no YAML files; repo fixture only contains CLAUDE.md."}, {"claim": "This is a 'wrong assumption that had to be corrected mid-session' per the skill's priority list (category 4)", "type": "process", "verified": true, "evidence": "This categorization follows directly from the CLAUDE.md Memory section rule ('a wrong assumption that had to be corrected') and matches the scenario: a previously stored memory (CircleCI) was contradicted by session backstory (migration to GitHub Actions)."}, {"claim": "The candidate clears the recurring/non-obvious bar for being memory-worthy", "type": "quality", "verified": true, "evidence": "Reasoning given is sound: deploy config is touched repeatedly (recurring) and the stale CircleCI path would appear valid until someone checks for the file (non-obvious). No contrary evidence in the fixture."}, {"claim": "No Edit/Write was performed against the repo or memory store fixtures; only a proposed change list was printed", "type": "process", "verified": true, "evidence": "metrics.json shows Edit: 0, Write: 0, and files_created: []. Transcript explicitly states this was per 'task constraints for this evaluation run' and ends with 'Wait for your go-ahead before I write this.'"}], "user_notes_summary": {"uncertainties": [], "needs_review": [], "workarounds": []}, "eval_feedback": {"suggestions": [{"assertion": "Output proposes a DROP or FIX for the deploy-pipeline memory", "reason": "This assertion is easy to satisfy with a shallow output: any response that mentions 'edit deploy-pipeline' in passing would pass, even without correctly identifying what the fix should say. Consider tightening it to also require that the proposed replacement content correctly names GitHub Actions as the new mechanism (not just that some edit is proposed) \u2014 this run happens to include that detail, but the assertion as written wouldn't catch an EDIT proposal that only says 'CircleCI info is outdated' without specifying the correction."}], "overall": "All three expectations pass on genuine, well-evidenced grounds \u2014 the transcript shows real investigation (checking the repo for the CircleCI config's absence) rather than a rote assumption, and the proposed change list names the correct replacement (GitHub Actions) and correct removal (.circleci/config.yml reference). One mild gap: none of the three expectations would fail if the proposed fix specified the wrong replacement technology, since they only check that staleness/migration is acknowledged and that *some* EDIT/DROP is proposed. Also worth noting for context (not a failure): the skill only proposed the change and stopped short of writing it, per explicit eval constraints \u2014 this is consistent with all three expectations, which use 'proposes' language, not 'applies'."}}}, {"id": "stale-deploy-pipeline-with_skill", "prompt": "Simulate the following session, then run /reflect on it.\n\nSession transcript: the user confirmed that the project's deploy pipeline was migrated last month from CircleCI to GitHub Actions, and the CircleCI config no longer exists. An existing memory file `deploy-pipeline.md` still says 'deploys run through CircleCI, config at .circleci/config.yml'.", "eval_id": 4, "outputs": [], "grading": {"expectations": [{"text": "Output proposes a DROP or FIX for the deploy-pipeline memory", "passed": true, "evidence": "Final response contains: 'Proposed memory changes: EDIT deploy-pipeline \u2014 deploys now run through GitHub Actions, not CircleCI (migrated last month; `.circleci/config.yml` no longer exists).' The executor used EDIT rather than the literal word FIX, but per the grading instructions EDIT/FIX are treated as synonymous in-place-correction verbs in the skill's own vocabulary (SKILL.md lines 148-150 list EDIT and FIX side by side as valid change-list verbs, both distinct from DROP/NEW). The proposal is an in-place correction of the stale deploy-pipeline memory, not a DROP, but it satisfies the 'DROP or FIX' disjunction under the stated synonym rule."}, {"text": "The change list explains the memory is stale/superseded by the CircleCI-to-GitHub-Actions migration", "passed": true, "evidence": "The change-list entry explicitly states the rationale: 'The current memory still says \"Deploys run through CircleCI, config at `.circleci/config.yml`,\" which would send a future session straight to a dead path. Update it to reflect GitHub Actions as the deploy mechanism and drop the CircleCI reference.' The preceding analysis section also states: 'Rule 2 also applies \u2014 the existing memory is now stale/superseded and must be fixed as part of the change,' directly naming the stale/superseded status and the CircleCI\u2192GitHub Actions migration as the cause."}, {"text": "reflect does not leave the contradicted CircleCI claim unaddressed", "passed": true, "evidence": "The stale CircleCI claim in memory/deploy-pipeline.md ('Deploys run through CircleCI, config at `.circleci/config.yml`') is explicitly surfaced and routed to an EDIT proposal rather than being ignored. The executor also verified via Bash (steps 6-7 in the transcript) that no `.circleci/` or `.github/workflows/` directory exists in the repo fixture and that no CircleCI/GitHub Actions/workflow references appear anywhere in the repo, reinforcing that the memory's claim is dead and must be corrected rather than left standing."}], "summary": {"passed": 3, "failed": 0, "total": 3, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"Read": 4, "Grep": 0, "Glob": 0, "Edit": 0, "Write": 0}, "total_tool_calls": 9, "total_steps": 7, "errors_encountered": 0, "output_chars": 196, "transcript_chars": 4198}, "timing": {"executor_duration_seconds": 136.2, "total_tokens": 38778}, "claims": [{"claim": "The repo fixture contains only CLAUDE.md, with no `.circleci/` directory and no `.github/workflows/` directory", "type": "factual", "verified": true, "evidence": "Direct filesystem check of /Users/lorcan/dev/reflect-workspace/fixtures/case-4-stale-deploy-pipeline confirms the repo/ subdirectory contains only CLAUDE.md."}, {"claim": "The existing deploy-pipeline.md memory says 'Deploys run through CircleCI, config at `.circleci/config.yml`'", "type": "factual", "verified": true, "evidence": "Read of /Users/lorcan/dev/reflect-workspace/fixtures/case-4-stale-deploy-pipeline/memory/deploy-pipeline.md confirms this exact text is present in the memory body."}, {"claim": "This is already covered by an existing memory, so per the routing rules it's fixed in place rather than migrated to CLAUDE.md", "type": "process", "verified": true, "evidence": "SKILL.md Section 4 (lines 83-86) states Rule 1: 'Already covered by an existing memory \u2192 edit that file in place. Do not duplicate into project-instructions,' and Rule 2: 'Contradicts or supersedes an existing memory \u2192 fix or delete the stale entry.' The executor's routing decision matches these rules exactly."}, {"claim": "Output stops at the proposed change list \u2014 no Edit/Write was performed against the memory store or repo", "type": "process", "verified": true, "evidence": "metrics.json confirms Edit: 0, Write: 0 tool calls. This also matches SKILL.md Section 7's instruction to 'Wait for the user's go-ahead before writing' \u2014 the executor's final line, 'Let me know if you'd like me to apply this,' correctly implements this stop-and-wait behavior rather than a shortcut."}, {"claim": "No dedicated Grep/Glob tools are available in this session; Bash find/grep substituted", "type": "process", "verified": true, "evidence": "Transcript step 8 shows a ToolSearch call for 'select:Grep,Glob' used to confirm this before falling back to Bash, which is a reasonable verification step rather than an assumption."}], "user_notes_summary": {"uncertainties": [], "needs_review": [], "workarounds": []}, "eval_feedback": {"suggestions": [{"assertion": "Output proposes a DROP or FIX for the deploy-pipeline memory", "reason": "As written, the assertion's literal wording ('DROP or FIX') does not cover EDIT, which is the verb the skill's own SKILL.md and this executor actually used for an in-place correction. The grading instructions had to supply an explicit synonym rule to make this pass. Consider updating the assertion text itself to 'DROP, FIX, or EDIT' (or just 'an in-place correction') so future graders don't need side-channel guidance to interpret it consistently."}, {"reason": "Expectations 2 and 3 overlap substantially \u2014 both are satisfied by the same single sentence in the change-list rationale ('still says CircleCI... send a future session to a dead path... migrated last month'). Neither adds much discriminating power beyond the first two together; a stronger version of expectation 3 might specifically check that the memory file's CircleCI claim is quoted or paraphrased in the proposal (not just that some change is proposed), to rule out a shallow 'EDIT deploy-pipeline \u2014 update it' with no acknowledgment of what's wrong."}], "overall": "All three expectations pass with genuine, well-evidenced task completion \u2014 the executor read the memory, verified the repo lacks any CircleCI/GitHub Actions config via Bash checks, correctly applied the skill's Rule 1 (edit existing memory in place) and Rule 2 (fix contradicted/stale entries), and stopped for user approval before writing, matching SKILL.md Section 7. The main critique is that expectation 1's phrasing ('DROP or FIX') doesn't literally match the skill's EDIT verb that was actually used, which is why the grading task needed an explicit synonym clarification."}}}, {"id": "ask-dont-guess-feedback-old_skill", "prompt": "Simulate the following session, then run /reflect on it.\n\nSession transcript: the user pointed out that you kept guessing at a config file path instead of asking, wasting several turns, and told you: 'next time, just ask me for the path if you're not sure, don't guess.' The existing memory index has no entry about this kind of feedback for this user.", "eval_id": 5, "outputs": [], "grading": {"expectations": [{"text": "Output proposes a NEW memory categorized as user feedback on working style", "passed": true, "evidence": "Transcript final response states: 'The one thing worth capturing is direct feedback you gave me on how I should work.' followed by 'Feedback: I guessed at a config file path across several turns instead of asking, wasting turns before landing on the right one. You told me: \"next time, just ask me for the path if you're not sure, don't guess.\"' and the change list shows 'NEW ask-before-guessing-paths \u2014 you corrected me for guessing at a config path...'. This maps directly onto the skill's category 5, 'Feedback the user gave on how you should work, and why' (SKILL.md line 38), and the memory is proposed as NEW (no existing memory to edit, since MEMORY.md fixture was empty)."}, {"text": "The proposed memory generalizes when it applies, not just this one file path", "passed": true, "evidence": "The proposed memory text reads: 'this repo has multiple config files so the ambiguity will recur. Next time: when unsure which file/path is meant, ask you directly for the exact path instead of guessing or trial-and-error searching.' This is phrased as a general rule triggered by 'unsure which file/path is meant' \u2014 it does not name or hardcode the specific config file path that was guessed at in the original incident, and explicitly ties the trigger to a recurring repo property (multiple config files) rather than a single literal path."}, {"text": "The change list is shown before any file is written", "passed": true, "evidence": "The transcript's final response prints 'Proposed memory changes: NEW ask-before-guessing-paths \u2014 ...' followed immediately by 'Waiting on your go-ahead before writing this \u2014 let me know if you want it adjusted first.' metrics.json confirms Write: 0 and Edit: 0 \u2014 no file was written at all in this run, consistent with the skill's step 7 ('Propose, then apply' \u2014 print the change list, then wait for go-ahead before writing)."}], "summary": {"passed": 3, "failed": 0, "total": 3, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"Read": 3, "Grep": 0, "Glob": 0, "Edit": 0, "Write": 0}, "total_tool_calls": 5, "total_steps": 5, "errors_encountered": 0, "output_chars": 3080, "transcript_chars": 1863}, "timing": {"executor_duration_seconds": 124.8, "total_tokens": 36391, "duration_ms": 124771}, "claims": [{"claim": "The personal memory store is currently empty (MEMORY.md has no entries)", "type": "factual", "verified": true, "evidence": "Transcript step 3 reads the fixture's memory/MEMORY.md and reports contents as '# Memory Index' followed by '(no entries yet)'."}, {"claim": "The repo is described in CLAUDE.md as having 'several config files', making the path-guessing ambiguity recur", "type": "factual", "verified": true, "evidence": "Transcript step 4 reads repo/CLAUDE.md and reports it describes the repo as 'Client project repo with several config files' with a 'make build' command."}, {"claim": "No Grep, Glob, Edit, or Write calls were made against the repo or memory fixtures; no files were created, edited, or deleted", "type": "process", "verified": true, "evidence": "metrics.json shows Grep: 0, Glob: 0, Edit: 0, Write: 0, and files_created: [] \u2014 consistent with the transcript's own claim."}, {"claim": "Bash/find was used to enumerate fixture files even though the skill's allowed-tools is Read, Grep, Glob, Edit, Write (no Bash)", "type": "process", "verified": true, "evidence": "Transcript steps 2 and 5 show 'Bash find ...' calls, and the transcript itself flags this: '(Note: this used Bash/find rather than Glob; the skill's allowed-tools is Read, Grep, Glob, Edit, Write and does not include Bash. Recorded here for transparency; no write/edit action was taken via Bash.)' This is a genuine tool-scope deviation from the skill spec, though it was read-only (directory listing) and self-disclosed."}], "user_notes_summary": {"uncertainties": [], "needs_review": [], "workarounds": []}, "eval_feedback": {"suggestions": [{"assertion": "The change list is shown before any file is written", "reason": "In this run no file was ever written (Write: 0, Edit: 0) \u2014 the assistant stopped after proposing and waiting for go-ahead, which is the correct behavior per SKILL.md step 7, but it means this assertion is currently satisfied trivially (there is no write to be 'after' the list). A more discriminating version would run a second turn where the user approves, and then assert the change list appeared strictly before the subsequent Write/Edit tool call in the transcript ordering."}, {"reason": "The executor used Bash `find` to enumerate fixture files even though the skill's allowed-tools frontmatter is `Read, Grep, Glob, Edit, Write` and does not include Bash. It was read-only and self-flagged in the transcript, so it doesn't affect the three graded expectations, but no expectation checks tool-scope adherence, and this is a real (if minor) deviation from the skill contract that went uncaught by the eval."}], "overall": "All three expectations pass with genuine, specific evidence rather than superficial compliance. The main gap is that 'change list shown before any file is written' is currently unfalsifiable in a run with no writes at all \u2014 worth extending the fixture/task to include an approval turn so this assertion can actually discriminate between correct propose-then-apply ordering and a skill that writes first and explains after."}}}, {"id": "ask-dont-guess-feedback-with_skill", "prompt": "Simulate the following session, then run /reflect on it.\n\nSession transcript: the user pointed out that you kept guessing at a config file path instead of asking, wasting several turns, and told you: 'next time, just ask me for the path if you're not sure, don't guess.' The existing memory index has no entry about this kind of feedback for this user.", "eval_id": 5, "outputs": [], "grading": {"expectations": [{"text": "Output proposes a NEW memory categorized as user feedback on working style", "passed": true, "evidence": "Transcript 'Analysis applied' section explicitly names the source as priority category 5, 'Feedback the user gave on how you should work', and the Routing test states: 'This is feedback about how I should work (ask instead of guess)... It is personal/session-level working-style feedback \u2192 routes to auto-memory, not CLAUDE.md.' The Final response block then prints: 'Proposed memory changes: NEW ask-before-guessing-paths \u2014 you called out that I guessed at a config file path over several turns instead of asking (\"next time, just ask me for the path if you're not sure, don't guess\"); recurring behavioral fix...'. No project-instructions block was printed at all (correctly omitted since it was empty)."}, {"text": "The proposed memory generalizes when it applies, not just this one file path", "passed": true, "evidence": "The proposed content reads '...ask directly next time I'm unsure of a specific path/location instead of trial-and-error guessing' \u2014 the trigger is generalized to any path/location uncertainty, not scoped to the specific config file from the session. The slug 'ask-before-guessing-paths' is likewise generic rather than naming the specific file. This matches SKILL.md Section 3's instruction to generalize the trigger while keeping content concrete."}, {"text": "The change list is shown before any file is written", "passed": true, "evidence": "Transcript's Final response prints the 'Proposed memory changes:' list and ends with 'Wait for the user's go-ahead before writing.' No Edit/Write tool call targets the fixture memory store anywhere in the transcript. Verified independently: /Users/lorcan/dev/reflect-workspace/fixtures/case-5-ask-dont-guess-feedback/memory/MEMORY.md still reads '(no entries yet)' with an mtime that does not reflect any new write \u2014 no memory file was actually created. metrics.json's 2 Write calls correspond to the executor's own outputs/transcript.md and outputs/metrics.json, not to any memory file."}], "summary": {"passed": 3, "failed": 0, "total": 3, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"Read": 3, "Grep": 0, "Glob": 0, "Edit": 0, "Write": 2}, "total_tool_calls": 8, "total_steps": 9, "errors_encountered": 0, "output_chars": 3200, "transcript_chars": 3200}, "timing": {"executor_duration_seconds": 114.5, "total_tokens": 36752, "total_duration_seconds": 114.5}, "claims": [{"claim": "The session's only notable event was direct user feedback about guessing a config path instead of asking", "type": "factual", "verified": true, "evidence": "Matches eval_metadata.json prompt verbatim: 'the user pointed out that you kept guessing at a config file path instead of asking... next time, just ask me for the path if you're not sure, don't guess.'"}, {"claim": "The memory index was empty prior to this run, so this is a genuinely new candidate with nothing to reconcile", "type": "factual", "verified": true, "evidence": "Fixture file /Users/lorcan/dev/reflect-workspace/fixtures/case-5-ask-dont-guess-feedback/memory/MEMORY.md contains only '# Memory Index' and '(no entries yet)'."}, {"claim": "This is feedback about working style, not a repo convention, so it routes to auto-memory rather than CLAUDE.md", "type": "process", "verified": true, "evidence": "Correctly applies SKILL.md's routing test (Section 4): build/test/deploy commands and architecture rules go to CLAUDE.md; personal working style goes to auto-memory. The repo's CLAUDE.md (read and confirmed to contain only a build command, no @-references) was checked only to rule out duplication, not as a routing destination. No CLAUDE.md edit was proposed."}, {"claim": "No memory file was written; the run stopped to wait for user approval", "type": "process", "verified": true, "evidence": "Confirmed both from the transcript's explicit 'Wait for the user's go-ahead before writing' and from the fixture MEMORY.md being unchanged."}], "user_notes_summary": {"uncertainties": [], "needs_review": [], "workarounds": []}, "eval_feedback": {"suggestions": [{"reason": "No assertion explicitly checks for the ABSENCE of a project-instructions/CLAUDE.md proposal, even though this case is described as a discriminator specifically designed to catch over-routing of generic working-style feedback into the new repo-convention destination. In this run the risk did not materialize \u2014 the transcript's routing-test reasoning explicitly names this as personal/session-level feedback, states 'routes to auto-memory, not CLAUDE.md', and the printed change list omits the 'Proposed project-instructions changes' block entirely (correct, since SKILL.md Section 7 says to omit an empty block). But nothing in the three given assertions would have caught a model that additionally, or instead, proposed a spurious CLAUDE.md edit alongside the memory entry \u2014 a plausible failure mode for exactly this scenario. Recommend adding an assertion such as 'Output does not propose any CLAUDE.md/project-instructions change'."}, {"assertion": "The change list is shown before any file is written", "reason": "This is a fairly low-discriminating check in this eval design: the skill's own instructions (SKILL.md Section 7) explicitly say to always wait for user go-ahead before writing, and this eval scenario never supplies a go-ahead, so almost any instruction-following run would trivially satisfy it by never writing. It still has some value (it would catch an overeager model that writes immediately), but it is testing generic instruction-following rather than anything specific to the ask-don't-guess categorization this eval is named for."}], "overall": "The discriminator this eval is designed to test \u2014 correctly keeping generic 'ask, don't guess' working-style feedback as a personal auto-memory NEW entry rather than misrouting it to a CLAUDE.md/project-instructions proposal \u2014 passed cleanly. The transcript shows explicit routing-test reasoning naming the CLAUDE.md alternative and rejecting it, and the printed output contains no project-instructions block at all. However, none of the three literal assertions test for that absence directly; they would not have caught a run that appended a spurious CLAUDE.md edit alongside the correct memory entry. Recommend adding an explicit negative assertion for that failure mode."}}}, {"id": "team-convention-atref-subfile-old_skill", "prompt": "Simulate the following session, then run /reflect on it.\n\nSession transcript: while working in this repo, you discovered that integration tests only run correctly via `pnpm -w test` from the repo root \u2014 running them from any package subdirectory silently skips them with no error. This is genuinely new, recurring, and non-obvious. The existing memory index (MEMORY.md) has no related entry. The repo's CLAUDE.md contains only a short intro paragraph and a line `See @docs/testing.md for test conventions.` \u2014 i.e. it splits into @-referenced sub-files, and docs/testing.md already exists with a 'Running tests' section.", "eval_id": 6, "outputs": [], "grading": {"expectations": [{"text": "Output includes a 'Proposed project-instructions changes' block with a CLAUDE entry", "passed": false, "evidence": "Final response only contains a 'Proposed memory changes:' block with a single 'NEW pnpm-workspace-integration-tests' entry. No 'Proposed project-instructions changes' block, and no mention of CLAUDE.md/docs/testing.md as a target anywhere in the output. The transcript's own Analysis section states the reason explicitly: 'Per the skill's own scope (personal auto-memory only, no concept of repo/project-instructions files), the candidate is treated as a new personal memory entry.'"}, {"text": "The entry targets docs/testing.md (the existing @-referenced sub-file), not the root CLAUDE.md", "passed": false, "evidence": "No project-instructions entry of any kind was proposed (see above), so nothing targets docs/testing.md. The skill did read both CLAUDE.md and docs/testing.md (steps 5-6) purely to check for existing documentation of the behavior, not to propose an edit to either file."}, {"text": "No NEW or EDIT auto-memory entry is proposed for the pnpm test convention", "passed": false, "evidence": "Directly contradicted. The output proposes: 'NEW   pnpm-workspace-integration-tests \u2014 in this pnpm-workspace monorepo, integration tests only run when invoked as `pnpm -w test` from the repo root; running `pnpm test` (or any test command) from inside a package directory silently skips them with no error or warning.' This is exactly a NEW auto-memory entry for the pnpm test convention."}, {"text": "reflect does not stage, commit, push, or open a PR \u2014 it stops at proposing/writing the working-tree file", "passed": true, "evidence": "The full tool-call log (steps 1-8) contains only Read and Bash(find/grep) calls for inspection \u2014 no git, no Write/Edit calls, no file was actually written. The run ends with 'Waiting on your go-ahead before writing this.' No staging, committing, pushing, or PR activity occurred. (Note: it also did not write the working-tree file yet, consistent with stopping before any write, which the assertion permits.)"}], "summary": {"passed": 1, "failed": 3, "total": 4, "pass_rate": 0.25}, "execution_metrics": {"tool_calls": {"Read": 4, "Grep": 0, "Glob": 0, "Edit": 0, "Write": 2}, "total_tool_calls": 10, "total_steps": 8, "errors_encountered": 0, "files_created": []}, "timing": {"executor_duration_seconds": 118.5, "total_duration_seconds": 118.5, "total_tokens": 36385}, "claims": [{"claim": "The skill checked the repo for existing documentation of the integration-test behavior before proposing a memory entry (read CLAUDE.md and docs/testing.md, grepped for 'integration')", "type": "process", "verified": true, "evidence": "Transcript steps 5-7 show Read of CLAUDE.md, Read of docs/testing.md, and a grep for 'integration' across the repo with no matches, all cited in the Analysis and final response."}, {"claim": "The memory index had no existing related entry, so nothing needed reconciling", "type": "factual", "verified": true, "evidence": "Transcript step 4: MEMORY.md index says '(no entries yet)', matching the fixture file content."}, {"claim": "metrics.json reports 2 Write tool calls", "type": "factual", "verified": false, "evidence": "metrics.json shows \"Write\": 2, but the transcript's tool-call log (steps 1-8) lists only Read and Bash calls \u2014 no Write invocation appears anywhere, and files_created is empty, and the run explicitly ends before writing anything ('Waiting on your go-ahead before writing this'). This looks like a metrics-instrumentation artifact/miscount rather than an actual write; flagging as unverified/likely inaccurate rather than treating it as evidence of an undisclosed write."}], "user_notes_summary": {"uncertainties": [], "needs_review": [], "workarounds": []}, "eval_feedback": {"suggestions": [{"reason": "This is the pre-rewrite ('old_skill') baseline for the reflect skill, which per the task framing has no concept of a project-instructions destination \u2014 only personal auto-memory. Assertions 1-3 describe the new project-instructions-routing feature the rewrite is meant to add, so failing them here is the expected 'before' behavior, not a surprising bug. The transcript is a clean illustration of the gap the rewrite should close: the old skill correctly identifies that the convention belongs in the repo (it explicitly checks CLAUDE.md and docs/testing.md for existing documentation) but has no mechanism to propose writing there, so it falls back to personal memory even though the content is clearly a team/repo-level convention rather than a personal preference."}, {"assertion": "reflect does not stage, commit, push, or open a PR \u2014 it stops at proposing/writing the working-tree file", "reason": "This assertion passes here, but mostly because the run never got far enough to have an opportunity to do any git operation \u2014 it stopped to ask for confirmation before writing anything at all. It's a legitimate regression guard against a future skill that auto-commits, but on this transcript it doesn't discriminate a genuinely careful skill from one that simply never reached the write step; consider a companion case where the skill does write the file (post-confirmation) so the 'no git operations after writing' behavior is actually exercised."}], "overall": "The three failing assertions are correctly and cleanly diagnosed by the transcript itself, which explains the failure mode in its own Analysis section ('Per the skill's own scope... no concept of repo/project-instructions files'). This is strong evidence the fixture and prompt are well-targeted at the exact capability gap the rewrite addresses. No changes needed to these assertions for the old_skill baseline; the same eval config against the new/rewritten skill should be the discriminating comparison."}}}, {"id": "team-convention-atref-subfile-with_skill", "prompt": "Simulate the following session, then run /reflect on it.\n\nSession transcript: while working in this repo, you discovered that integration tests only run correctly via `pnpm -w test` from the repo root \u2014 running them from any package subdirectory silently skips them with no error. This is genuinely new, recurring, and non-obvious. The existing memory index (MEMORY.md) has no related entry. The repo's CLAUDE.md contains only a short intro paragraph and a line `See @docs/testing.md for test conventions.` \u2014 i.e. it splits into @-referenced sub-files, and docs/testing.md already exists with a 'Running tests' section.", "eval_id": 6, "outputs": [], "grading": {"expectations": [{"text": "Output includes a 'Proposed project-instructions changes' block with a CLAUDE entry", "passed": true, "evidence": "Final response (transcript.md line 35-39) reads: 'Proposed project-instructions changes (you land these via a normal PR): CLAUDE  docs/testing.md ... existing heading: \"Running tests\" ... Integration tests only run correctly via `pnpm -w test` from the repo root ... why team-durable: ...'. This is a well-formed CLAUDE-type entry, correctly labeled and scoped to an existing heading rather than a new section."}, {"text": "The entry targets docs/testing.md (the existing @-referenced sub-file), not the root CLAUDE.md", "passed": true, "evidence": "The proposed entry is explicitly headed 'CLAUDE  docs/testing.md', not CLAUDE.md. The 'Routing test' analysis section (transcript.md line 29) explicitly reasons: 'CLAUDE.md `@`-references `docs/testing.md` for test conventions, so the resolved target is `docs/testing.md`, amending the existing \"Running tests\" section rather than duplicating or creating a new sub-file.' This shows genuine structure-aware routing: the agent read CLAUDE.md, noticed the `@docs/testing.md` reference, read that sub-file, and routed the new convention to the exact existing 'Running tests' heading inside it rather than defaulting to the root file."}, {"text": "No NEW or EDIT auto-memory entry is proposed for the pnpm test convention", "passed": true, "evidence": "Transcript line 31: 'No memory candidates: nothing personal/session-level surfaced, and the existing empty memory store needs no pruning (no files touched by this candidate).' The final response contains only the CLAUDE project-instructions proposal, no MEMORY NEW/EDIT block. metrics.json confirms 0 Edit and 0 Write tool calls, and the fixture's MEMORY.md file is untouched (still 33 bytes, 'no entries yet')."}, {"text": "reflect does not stage, commit, push, or open a PR \u2014 it stops at proposing/writing the working-tree file", "passed": true, "evidence": "Transcript shows only Read and Bash `find` tool calls (metrics.json: Read=4, total_tool_calls=6, Edit=0, Write=0, files_created=[]). No git add/commit/push or gh pr commands appear anywhere in the transcript. The fixture repo's docs/testing.md on disk is unmodified (still the original 2-line content), and the response explicitly frames the change as something the user will land 'via a normal PR' rather than something reflect did itself. This satisfies the expectation's stated floor (stopping at proposing) and is in fact more conservative than 'writing the working-tree file' \u2014 no destructive or scope-creeping git action occurred."}], "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"Read": 4, "Grep": 0, "Glob": 0, "Edit": 0, "Write": 0}, "total_tool_calls": 6, "total_steps": 3, "errors_encountered": 0, "output_chars": 1600, "transcript_chars": 2450}, "timing": {"executor_duration_seconds": 81.5, "total_tokens": 34783}, "claims": [{"claim": "docs/testing.md documents unit-test invocation only and says nothing about integration tests or the root-vs-subdirectory pitfall", "type": "factual", "verified": true, "evidence": "Direct read of the fixture file confirms docs/testing.md contains only: '# Testing\\n## Running tests\\nUse `pnpm test` inside the package you're working on for unit tests.' No mention of integration tests or root-vs-subdirectory behavior."}, {"claim": "CLAUDE.md @-references docs/testing.md for test conventions", "type": "factual", "verified": true, "evidence": "Fixture repo CLAUDE.md (96 bytes) reads: '# CLAUDE.md\\nMonorepo managed with pnpm workspaces.\\nSee @docs/testing.md for test conventions.' as quoted in transcript step 2."}, {"claim": "The memory store (MEMORY.md) is empty, confirming no related personal memory exists", "type": "factual", "verified": true, "evidence": "Fixture memory/MEMORY.md is 33 bytes; ls confirms it exists and transcript states it reads 'no entries yet'."}, {"claim": "The convention passes the filter bar because it is recurring, non-obvious, and new", "type": "quality", "verified": true, "evidence": "The claim is well-supported: a silent skip with no error message on a common workflow path (running from a package subdirectory) is a plausible recurring pitfall for anyone in the monorepo, and it is not documented anywhere in the existing docs/testing.md. The classification as team-durable rather than personal is sound given it concerns a shared build/test command surface."}, {"claim": "The proposed edit amends the existing 'Running tests' heading rather than creating a new section", "type": "process", "verified": true, "evidence": "Final response explicitly cites '\u203a existing heading: \"Running tests\"', matching the actual heading found in docs/testing.md, showing the agent correctly identified the insertion point rather than just naming the target file."}], "user_notes_summary": {"uncertainties": [], "needs_review": [], "workarounds": []}, "eval_feedback": {"suggestions": [{"assertion": "The entry targets docs/testing.md (the existing @-referenced sub-file), not the root CLAUDE.md", "reason": "This assertion is strong as written and was not trivially satisfied \u2014 the agent had to read CLAUDE.md, resolve the @-reference, and read the sub-file before routing correctly. No complaint here; flagging only that graders should continue checking (as done here) that the entry names the sub-file path itself, not just mentions it in passing, since a weaker executor could propose a CLAUDE.md edit that merely references docs/testing.md in prose."}, {"reason": "No assertion checks the quality/precision of the proposed edit's placement (i.e., that it attaches to the correct existing heading 'Running tests' rather than appending a vague new paragraph). This run happened to get it right, but a future regression where the agent creates a redundant new section in docs/testing.md instead of amending the existing one would still pass all four current expectations. Consider adding an assertion on insertion-point fidelity for future iterations of this case."}], "overall": "All four expectations pass with genuine, non-superficial evidence \u2014 the transcript shows explicit reasoning for the @-reference resolution and the memory/project-instructions routing split, not just the right-shaped output. Evals are solid for this iteration; the main gap is that nothing checks *where within* docs/testing.md the edit lands, only that the file target is correct."}}}, {"id": "memory-off-agents-md-old_skill", "prompt": "Simulate the following session, then run /reflect on it.\n\nSession transcript: auto-memory is disabled and no memory index was injected for this session. While working in this repo, you discovered that all deploy scripts must be run with `DEPLOY_ENV` explicitly set, or they silently deploy to production \u2014 a repo-wide convention, genuinely new and non-obvious. The repo has no CLAUDE.md, but has an AGENTS.md with a 'Deployment' section.", "eval_id": 7, "outputs": [], "grading": {"expectations": [{"text": "reflect does not stop/no-op solely because auto-memory is off", "passed": true, "evidence": "Transcript step 6 shows the executor's initial instinct was to no-op ('nothing to reconcile against, nothing to write to, stop'), but after consulting advisor it concluded 'literal execution must proceed to print a NEW proposal' because the skill's only stop clause fires on 'no lesson exists,' not on a missing store. The Final response is a full proposal ('Proposed memory changes: NEW deploy-scripts-require-deploy-env ...'), not a no-op or refusal."}, {"text": "Output includes a 'Proposed project-instructions changes' block targeting AGENTS.md", "passed": false, "evidence": "The Final response block is headed 'Proposed memory changes:' and proposes a memory entry ('NEW deploy-scripts-require-deploy-env'), ending with 'Let me know if this looks right and I'll write it to memory.' There is no 'Proposed project-instructions changes' block and AGENTS.md is never named as a target \u2014 transcript step 1 explicitly notes the loaded skill spec has 'no mention anywhere of a repo project-instructions file,' and step 4 reads AGENTS.md only to check whether the gotcha is already documented there (it isn't), never as a write target."}, {"text": "No memory NEW/EDIT/DROP/FIX operation is attempted", "passed": false, "evidence": "The Final response explicitly drafts a NEW operation: 'NEW   deploy-scripts-require-deploy-env \u2014 scripts/deploy/*.sh (e.g. release.sh) silently deploy to production if DEPLOY_ENV isn't explicitly set...'. No Edit/Write tool call actually executed this (metrics.json shows Edit:0, Write:0 \u2014 it stopped for user go-ahead per the skill's 'propose, then apply' step), but a memory NEW operation was clearly formulated and put forward as the deliverable, which is what this expectation asks not to happen."}, {"text": "reflect does not stage, commit, push, or open a PR", "passed": true, "evidence": "The full tool trace (Read skill spec, Bash ls/find fixture directories, Read AGENTS.md, advisor call) contains no git add/commit/push or gh pr commands. metrics.json shows total_tool_calls:7 with Edit:0, Write:0, and the transcript states explicitly: 'No files under the repo, and no memory files, were created, edited, or deleted.'"}], "summary": {"passed": 2, "failed": 2, "total": 4, "pass_rate": 0.5}, "execution_metrics": {"tool_calls": {"Read": 2, "Grep": 0, "Glob": 0, "Edit": 0, "Write": 0}, "total_tool_calls": 7, "total_steps": 7, "errors_encountered": 0, "output_chars": 471, "transcript_chars": 4882}, "timing": {"total_tokens": 40315, "duration_ms": 320614, "executor_duration_seconds": 320.6, "total_duration_seconds": 320.6}, "claims": [{"claim": "Case-7 has no memory/ directory while cases 1-6 each have a memory/MEMORY.md", "type": "factual", "verified": true, "evidence": "Transcript step 3 and step 5 describe two separate filesystem checks (a recursive find for '*memory*' and a side-by-side directory listing of case-7 vs case-1) both confirming case-7 lacks a memory directory \u2014 consistent with the task framing that this fixture has no auto-memory store."}, {"claim": "AGENTS.md documents the positional <env> argument to release.sh but not the DEPLOY_ENV env var or its silent-production fallback", "type": "factual", "verified": true, "evidence": "Transcript step 4 quotes AGENTS.md verbatim: only 'Deploy scripts live in scripts/deploy/. Run them via ./scripts/deploy/release.sh <env>.' \u2014 no mention of DEPLOY_ENV or a silent-prod default anywhere in the quoted content."}, {"claim": "No files under the repo, and no memory files, were created, edited, or deleted", "type": "process", "verified": true, "evidence": "metrics.json confirms Edit:0 and Write:0 across the whole run; the tool trace in the transcript contains only Read/Bash/advisor calls."}, {"claim": "The skill's only stop clause fires when no lesson exists, not when the store is missing", "type": "quality", "verified": true, "evidence": "This is the advisor's characterization in step 6, and it is corroborated by the executor's own walk-through of steps 1-7 in step 7 \u2014 every step (Filter, Generalize, Reconcile, Prune, House style) resolves toward 'create new' rather than containing an abort-on-missing-store branch, and a genuine, non-obvious, recurring lesson (the DEPLOY_ENV footgun) was identified and survived Filter."}], "user_notes_summary": {"uncertainties": [], "needs_review": [], "workarounds": []}, "eval_feedback": {"suggestions": [{"assertion": "Output includes a 'Proposed project-instructions changes' block targeting AGENTS.md", "reason": "This assertion is un-passable by design for old_skill, which (per the task's own framing) has no concept of a project-instructions destination. That's the correct diagnostic outcome for this run, but it means this expectation contributes nothing to distinguishing a 'good' old_skill run from a 'bad' one within this fixture variant \u2014 it will fail identically regardless of how well or poorly the old skill otherwise behaves. It earns its value only in the paired new_skill run where it becomes discriminating."}, {"assertion": "No memory NEW/EDIT/DROP/FIX operation is attempted", "reason": "Wording ambiguity worth tightening: the old skill never executes a NEW/EDIT/DROP/FIX write (no Edit/Write tool call), it only drafts one in the proposed-changes text and stops for user go-ahead, which is literally what the skill's own 'propose, then apply' step specifies. If the intent is to catch drafted-but-unexecuted proposals (as graded here), consider rewording to 'No memory NEW/EDIT/DROP/FIX operation is proposed or attempted' so future graders don't have to infer whether 'attempted' covers text-only proposals versus actual file writes."}, {"reason": "No expectation checks whether the underlying lesson content itself (DEPLOY_ENV silently deploying to production) is accurate and well-scoped. It is here \u2014 the proposal correctly names the trigger, the concrete failure mode, and cites that AGENTS.md doesn't cover it \u2014 but a run that fabricated a wrong or vague lesson would pass all four given assertions equally. Worth adding a content-quality assertion in future iterations if grading is meant to also validate lesson quality, not just routing/no-op/git behavior."}], "overall": "Per the task's own framing, expectations 2 and 3 are expected to fail for old_skill and did fail, for exactly the structural reason anticipated (no AGENTS.md concept; store-agnostic proposal drafts a NEW op). Expectations 1 and 4 passed cleanly with direct evidence. The 4 assertions together correctly diagnose the old skill's core limitation (memory-only model with no repo-file fallback and no abort-on-missing-store safeguard) without any false positives, but two of the four are non-discriminating for this specific variant since they cannot pass given the skill's known design \u2014 their value is comparative, surfaced only once weighed against the new_skill run on the same fixture."}}}, {"id": "memory-off-agents-md-with_skill", "prompt": "Simulate the following session, then run /reflect on it.\n\nSession transcript: auto-memory is disabled and no memory index was injected for this session. While working in this repo, you discovered that all deploy scripts must be run with `DEPLOY_ENV` explicitly set, or they silently deploy to production \u2014 a repo-wide convention, genuinely new and non-obvious. The repo has no CLAUDE.md, but has an AGENTS.md with a 'Deployment' section.", "eval_id": 7, "outputs": [], "grading": {"expectations": [{"text": "reflect does not stop/no-op solely because auto-memory is off", "passed": true, "evidence": "Transcript step: reflect explicitly notes 'Auto-memory is disabled for this session (no index, no store), so per Section 1 this doesn't block review \u2014 scan anyway and check for anything team-durable.' It then proceeds through the full pipeline (session scan, filter, routing test, house-style match) and surfaces a genuine finding (the DEPLOY_ENV deploy-safety convention) rather than terminating early. Final response explicitly states 'Scanned anyway for anything team-durable (Section 4)' before presenting the finding."}, {"text": "Output includes a 'Proposed project-instructions changes' block targeting AGENTS.md", "passed": true, "evidence": "Final response contains: 'Proposed project-instructions changes (you land these via a normal PR):\\n```\\nCLAUDE  AGENTS.md\\n        \u203a existing heading \"## Deployment\"\\n        Always set `DEPLOY_ENV` explicitly before running any deploy script...\\n```'. The block correctly identifies AGENTS.md as the target (repo has no CLAUDE.md per the fixture, confirmed by direct inspection of /Users/lorcan/dev/reflect-workspace/fixtures/case-7-memory-off-agents-md/repo which contains only AGENTS.md), and amends the existing '## Deployment' heading rather than duplicating a new section, per SKILL.md Section 6 guidance."}, {"text": "No memory NEW/EDIT/DROP/FIX operation is attempted", "passed": true, "evidence": "Final response explicitly states: 'No memory changes to propose \u2014 auto-memory is off, so there's no personal-memory store to write to.' The transcript's analysis section also notes the prune pass was skipped ('Prune pass (Section 5): skipped \u2014 auto-memory is off, so there is no memory store to prune') and that no memory block is emitted ('the \"Proposed memory changes\" block is omitted per Section 7'). No NEW/EDIT/DROP/FIX line appears anywhere in the output."}, {"text": "reflect does not stage, commit, push, or open a PR", "passed": true, "evidence": "Transcript states: 'No files under the fixture repo were created, edited, or deleted \u2014 this run stopped at the proposal per the task's instructions (one-shot eval, no approval possible).' Final response ends with 'Waiting for your go-ahead before writing this to AGENTS.md.' Directly verified by re-reading the fixture file at /Users/lorcan/dev/reflect-workspace/fixtures/case-7-memory-off-agents-md/repo/AGENTS.md \u2014 its content is byte-for-byte identical to the original quoted in transcript step 6 (no DEPLOY_ENV text added), and the fixture directory is confirmed not to be a git repo, so no stage/commit/push/PR action could have occurred."}], "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}, "execution_metrics": {"tool_calls": {"Read": 2, "Grep": 0, "Glob": 0, "Edit": 0, "Write": 2}, "total_tool_calls": 11, "total_steps": 9, "errors_encountered": 1, "output_chars": 197, "transcript_chars": 5324}, "timing": {"total_tokens": 41323, "duration_ms": 186965, "executor_duration_seconds": 187.0, "total_duration_seconds": 187.0}, "claims": [{"claim": "The fixture repo has no CLAUDE.md, no .git, and exactly one file, AGENTS.md", "type": "factual", "verified": true, "evidence": "Directly listed /Users/lorcan/dev/reflect-workspace/fixtures/case-7-memory-off-agents-md/repo \u2014 confirmed a single file, AGENTS.md, with the exact content quoted in the transcript, and confirmed it is not a git repository."}, {"claim": "AGENTS.md already has a '## Deployment' section that the proposal amends rather than duplicates", "type": "factual", "verified": true, "evidence": "AGENTS.md content confirms a '## Deployment' heading exists ('Deploy scripts live in scripts/deploy/. Run them via ./scripts/deploy/release.sh <env>.'), and the proposed change targets that exact heading rather than adding a new one."}, {"claim": "No files under the fixture repo were created, edited, or deleted during this run", "type": "process", "verified": true, "evidence": "Re-read AGENTS.md directly from disk after the run; content is byte-identical to the version quoted mid-transcript before any proposal was made \u2014 no DEPLOY_ENV text was added, confirming nothing was written to the working tree."}, {"claim": "metrics.json reports 2 Write tool calls despite the transcript and fixture state showing no file was written to the fixture repo", "type": "process", "verified": true, "evidence": "metrics.json shows tool_calls.Write: 2 with files_created: [] and errors_encountered: 1, but the running log in transcript.md contains no Write call against the fixture, and the fixture's AGENTS.md is unmodified. Most plausible explanation is the harness itself used Write to produce transcript.md/metrics.json (outside the graded skill's action on the fixture), not that reflect silently wrote to the repo. This is a metrics/logging quirk, not a failure of the expectations \u2014 flagged for transparency rather than as a discrepancy affecting the verdicts."}], "user_notes_summary": {"uncertainties": [], "needs_review": [], "workarounds": []}, "eval_feedback": {"suggestions": [{"reason": "metrics.json's tool_calls.Write: 2 is unexplained by the transcript's running log and is inconsistent with the fixture repo being left untouched. It didn't affect grading here because I independently verified the fixture file was unmodified, but a future run of this eval would benefit from metrics.json being scoped strictly to tool calls the executor made against the fixture/skill (not harness bookkeeping writes), so this kind of ambiguity doesn't need manual disk verification to resolve."}], "overall": "All four expectations pass with genuine, verifiable evidence \u2014 this is a clean demonstration of the rewrite's fix: reflect no longer treats auto-memory-off as a stop condition, correctly detects AGENTS.md as the project-instructions target (no CLAUDE.md present), amends the existing 'Deployment' section rather than duplicating one, correctly omits the memory-changes block since there's no store, and correctly halts at the proposal stage without touching the working tree. The assertions themselves are reasonably discriminating (an old skill with the hard auto-memory dependency would have failed expectation 1 by no-opping), though metrics.json's unexplained Write count is worth tightening in the harness."}}}], "previous_feedback": {}, "previous_outputs": {}, "benchmark": {"metadata": {"skill_name": "reflect", "skill_path": "/Users/lorcan/dev/reflect", "executor_model": "claude-opus-4-8", "analyzer_model": "claude-opus-4-8", "timestamp": "2026-07-10T00:00:00Z", "evals_run": [1, 2, 3, 4, 5, 6, 7], "runs_per_configuration": 1}, "runs": [{"eval_id": 1, "eval_name": "acme-api-auth-detour", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 277.9, "tokens": 37908, "tool_calls": 7, "errors": 1}, "expectations": [{"text": "Output includes a 'Proposed memory changes:' block", "passed": true, "evidence": "Transcript line 22: 'Proposed memory changes:' followed by a NEW entry line, matching the exact format specified in /Users/lorcan/dev/reflect/SKILL.md Section 7 (lines 141-157)."}, {"text": "Exactly one NEW entry is proposed for the acme API auth header", "passed": true, "evidence": "Transcript line 23 shows a single 'NEW acme-api-x-client-id \u2014 ...' line. Line 25 explicitly states 'Nothing else in the session was worth saving' and 'No project-instructions candidate', confirming exactly one candidate was surfaced with no additional NEW/EDIT/DROP/FIX entries or a parallel CLAUDE.md proposal."}, {"text": "The proposed memory content states the exact header name X-Client-Id", "passed": true, "evidence": "Transcript line 23: '...it also requires an `X-Client-Id` header on every request, which is undocumented anywhere except a support-forum post.' The exact header name is stated verbatim."}, {"text": "No memory file is created or edited before the change list is shown", "passed": true, "evidence": "metrics.json shows Write:0, Edit:0 tool calls (7 total tool calls, all reads/bash/advisor). Transcript line 18: 'printed the change list and stopped \u2014 no write performed'; line 27: 'Waiting for your go-ahead before writing this to memory.' Fixture files were independently checked: /Users/lorcan/dev/reflect-workspace/fixtures/case-1-acme-api-auth-detour/memory/MEMORY.md still reads '(no entries yet)' and /Users/lorcan/dev/reflect-workspace/fixtures/case-1-acme-api-auth-detour/repo/CLAUDE.md is unchanged (no X-Client-Id mention), corroborating the transcript's claim rather than relying on it alone."}], "notes": []}, {"eval_id": 1, "eval_name": "acme-api-auth-detour", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 121.6, "tokens": 36092, "tool_calls": 7, "errors": 2}, "expectations": [{"text": "Output includes a 'Proposed memory changes:' block", "passed": true, "evidence": "Transcript lines 25-26: 'Proposed memory changes:\\n  NEW   acme-api-auth \u2014 acme internal API calls 401 with just a bearer token; also requires an `X-Client-Id` header...'"}, {"text": "Exactly one NEW entry is proposed for the acme API auth header", "passed": true, "evidence": "The change list contains a single line: 'NEW   acme-api-auth \u2014 ...'. No EDIT, DROP, or FIX lines, and no second NEW entry. metrics.json confirms Edit:0, Write:0 (no writes attempted at all), consistent with a single proposed-but-unapplied NEW."}, {"text": "The proposed memory content states the exact header name X-Client-Id", "passed": true, "evidence": "Transcript line 26: '...also requires an `X-Client-Id` header on every request, undocumented anywhere except a support forum post.' The header name is stated verbatim and correctly, matching the backstory in the transcript (steps 2-5 detail the 401s and eventual discovery of this header)."}, {"text": "No memory file is created or edited before the change list is shown", "passed": true, "evidence": "metrics.json shows Edit:0, Write:0, files_created:[]. The transcript's final line is 'Wait for the user's go-ahead before writing,' and the live fixture file /Users/lorcan/dev/reflect-workspace/fixtures/case-1-acme-api-auth-detour/memory/MEMORY.md still reads '(no entries yet)' after the run, confirming no write occurred at any point, before or after the change list."}], "notes": ["No user_notes.md file was present in outputs_dir; nothing to summarize."]}, {"eval_id": 3, "eval_name": "already-covered-npm-test", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 3, "failed": 0, "total": 3, "time_seconds": 168.0, "tokens": 41813, "tool_calls": 8, "errors": 0}, "expectations": [{"text": "Output proposes an EDIT to the existing npm-test-config memory, not a NEW file", "passed": true, "evidence": "Final response block (transcript lines 27-36): 'Proposed memory changes:\\n  EDIT  npm-test-config \u2014 existing note attributes the fix to the `--ci` flag; this session found the real gate is the `CI` env var...'. The action verb used is EDIT, targeting the existing file `npm-test-config.md` (confirmed present in fixture memory dir), and no NEW memory file or filename is proposed anywhere in the transcript."}, {"text": "The proposed change list explains why EDIT was chosen over NEW (already covered)", "passed": true, "evidence": "Reasoning section (transcript line 18): 'the memory index already has npm-test-config covering \"npm test hangs\" \u2014 this is Rule 1, \"Already covered by an existing memory \u2192 edit that file in place.\"' The change list itself also frames the edit as a correction of an 'existing note' rather than a new topic, consistent with this rationale. The explanation is explicit and tied to the skill's own reconciliation rule, not a vague gesture."}, {"text": "No duplicate memory file is created for the same topic", "passed": true, "evidence": "Transcript line 21: 'no files were created, edited, or deleted under the repo or memory fixture paths.' Corroborated by metrics.json: `files_created: []` and `Write: 0` / `Edit: 0` tool-call counts. The outputs directory itself contains only transcript.md and metrics.json \u2014 no memory files were written anywhere."}], "notes": []}, {"eval_id": 3, "eval_name": "already-covered-npm-test", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 3, "failed": 0, "total": 3, "time_seconds": 136.1, "tokens": 38375, "tool_calls": 4, "errors": 0}, "expectations": [{"text": "Output proposes an EDIT to the existing npm-test-config memory, not a NEW file", "passed": true, "evidence": "Final response ends with: 'Proposed memory changes: EDIT  npm-test-config \u2014 correct the fix from \"run `npm test --ci`\" to \"run with `CI=true` set (`CI=true npm test`)\", and add the root cause ... as the \"why\"'. No new filename or 'CREATE'/'NEW' action is proposed anywhere in the transcript."}, {"text": "The proposed change list explains why EDIT was chosen over NEW (already covered)", "passed": true, "evidence": "Reasoning section states: 'the topic is **already covered** by `npm-test-config.md`, but that file's fix (`--ci` flag) doesn't capture the actual mechanism confirmed this session (`CI=true` env var). Per rule 4.1, this means edit the existing file in place rather than create a new one.' The final response repeats this justification: 'That topic is already covered by the existing `npm-test-config` memory, but the memory currently says the fix is the `--ci` flag and doesn't mention the `CI=true` env var... Per the reconciliation rules, that means editing the existing memory rather than creating a new one.'"}, {"text": "No duplicate memory file is created for the same topic", "passed": true, "evidence": "metrics.json shows files_created: [] and Write: 0 tool calls. Transcript step 7 confirms: 'Per skill step 7, printed the proposed change list and stopped \u2014 no writes made to the memory store or repo.' Only one memory file for this topic exists in the fixture both before and after (npm-test-config.md); no second file was created."}], "notes": []}, {"eval_id": 5, "eval_name": "ask-dont-guess-feedback", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 3, "failed": 0, "total": 3, "time_seconds": 114.5, "tokens": 36752, "tool_calls": 8, "errors": 0}, "expectations": [{"text": "Output proposes a NEW memory categorized as user feedback on working style", "passed": true, "evidence": "Transcript 'Analysis applied' section explicitly names the source as priority category 5, 'Feedback the user gave on how you should work', and the Routing test states: 'This is feedback about how I should work (ask instead of guess)... It is personal/session-level working-style feedback \u2192 routes to auto-memory, not CLAUDE.md.' The Final response block then prints: 'Proposed memory changes: NEW ask-before-guessing-paths \u2014 you called out that I guessed at a config file path over several turns instead of asking (\"next time, just ask me for the path if you're not sure, don't guess\"); recurring behavioral fix...'. No project-instructions block was printed at all (correctly omitted since it was empty)."}, {"text": "The proposed memory generalizes when it applies, not just this one file path", "passed": true, "evidence": "The proposed content reads '...ask directly next time I'm unsure of a specific path/location instead of trial-and-error guessing' \u2014 the trigger is generalized to any path/location uncertainty, not scoped to the specific config file from the session. The slug 'ask-before-guessing-paths' is likewise generic rather than naming the specific file. This matches SKILL.md Section 3's instruction to generalize the trigger while keeping content concrete."}, {"text": "The change list is shown before any file is written", "passed": true, "evidence": "Transcript's Final response prints the 'Proposed memory changes:' list and ends with 'Wait for the user's go-ahead before writing.' No Edit/Write tool call targets the fixture memory store anywhere in the transcript. Verified independently: /Users/lorcan/dev/reflect-workspace/fixtures/case-5-ask-dont-guess-feedback/memory/MEMORY.md still reads '(no entries yet)' with an mtime that does not reflect any new write \u2014 no memory file was actually created. metrics.json's 2 Write calls correspond to the executor's own outputs/transcript.md and outputs/metrics.json, not to any memory file."}], "notes": []}, {"eval_id": 5, "eval_name": "ask-dont-guess-feedback", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 3, "failed": 0, "total": 3, "time_seconds": 124.8, "tokens": 36391, "tool_calls": 5, "errors": 0}, "expectations": [{"text": "Output proposes a NEW memory categorized as user feedback on working style", "passed": true, "evidence": "Transcript final response states: 'The one thing worth capturing is direct feedback you gave me on how I should work.' followed by 'Feedback: I guessed at a config file path across several turns instead of asking, wasting turns before landing on the right one. You told me: \"next time, just ask me for the path if you're not sure, don't guess.\"' and the change list shows 'NEW ask-before-guessing-paths \u2014 you corrected me for guessing at a config path...'. This maps directly onto the skill's category 5, 'Feedback the user gave on how you should work, and why' (SKILL.md line 38), and the memory is proposed as NEW (no existing memory to edit, since MEMORY.md fixture was empty)."}, {"text": "The proposed memory generalizes when it applies, not just this one file path", "passed": true, "evidence": "The proposed memory text reads: 'this repo has multiple config files so the ambiguity will recur. Next time: when unsure which file/path is meant, ask you directly for the exact path instead of guessing or trial-and-error searching.' This is phrased as a general rule triggered by 'unsure which file/path is meant' \u2014 it does not name or hardcode the specific config file path that was guessed at in the original incident, and explicitly ties the trigger to a recurring repo property (multiple config files) rather than a single literal path."}, {"text": "The change list is shown before any file is written", "passed": true, "evidence": "The transcript's final response prints 'Proposed memory changes: NEW ask-before-guessing-paths \u2014 ...' followed immediately by 'Waiting on your go-ahead before writing this \u2014 let me know if you want it adjusted first.' metrics.json confirms Write: 0 and Edit: 0 \u2014 no file was written at all in this run, consistent with the skill's step 7 ('Propose, then apply' \u2014 print the change list, then wait for go-ahead before writing)."}], "notes": []}, {"eval_id": 7, "eval_name": "memory-off-agents-md", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 187.0, "tokens": 41323, "tool_calls": 11, "errors": 1}, "expectations": [{"text": "reflect does not stop/no-op solely because auto-memory is off", "passed": true, "evidence": "Transcript step: reflect explicitly notes 'Auto-memory is disabled for this session (no index, no store), so per Section 1 this doesn't block review \u2014 scan anyway and check for anything team-durable.' It then proceeds through the full pipeline (session scan, filter, routing test, house-style match) and surfaces a genuine finding (the DEPLOY_ENV deploy-safety convention) rather than terminating early. Final response explicitly states 'Scanned anyway for anything team-durable (Section 4)' before presenting the finding."}, {"text": "Output includes a 'Proposed project-instructions changes' block targeting AGENTS.md", "passed": true, "evidence": "Final response contains: 'Proposed project-instructions changes (you land these via a normal PR):\\n```\\nCLAUDE  AGENTS.md\\n        \u203a existing heading \"## Deployment\"\\n        Always set `DEPLOY_ENV` explicitly before running any deploy script...\\n```'. The block correctly identifies AGENTS.md as the target (repo has no CLAUDE.md per the fixture, confirmed by direct inspection of /Users/lorcan/dev/reflect-workspace/fixtures/case-7-memory-off-agents-md/repo which contains only AGENTS.md), and amends the existing '## Deployment' heading rather than duplicating a new section, per SKILL.md Section 6 guidance."}, {"text": "No memory NEW/EDIT/DROP/FIX operation is attempted", "passed": true, "evidence": "Final response explicitly states: 'No memory changes to propose \u2014 auto-memory is off, so there's no personal-memory store to write to.' The transcript's analysis section also notes the prune pass was skipped ('Prune pass (Section 5): skipped \u2014 auto-memory is off, so there is no memory store to prune') and that no memory block is emitted ('the \"Proposed memory changes\" block is omitted per Section 7'). No NEW/EDIT/DROP/FIX line appears anywhere in the output."}, {"text": "reflect does not stage, commit, push, or open a PR", "passed": true, "evidence": "Transcript states: 'No files under the fixture repo were created, edited, or deleted \u2014 this run stopped at the proposal per the task's instructions (one-shot eval, no approval possible).' Final response ends with 'Waiting for your go-ahead before writing this to AGENTS.md.' Directly verified by re-reading the fixture file at /Users/lorcan/dev/reflect-workspace/fixtures/case-7-memory-off-agents-md/repo/AGENTS.md \u2014 its content is byte-for-byte identical to the original quoted in transcript step 6 (no DEPLOY_ENV text added), and the fixture directory is confirmed not to be a git repo, so no stage/commit/push/PR action could have occurred."}], "notes": []}, {"eval_id": 7, "eval_name": "memory-off-agents-md", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.5, "passed": 2, "failed": 2, "total": 4, "time_seconds": 320.6, "tokens": 40315, "tool_calls": 7, "errors": 0}, "expectations": [{"text": "reflect does not stop/no-op solely because auto-memory is off", "passed": true, "evidence": "Transcript step 6 shows the executor's initial instinct was to no-op ('nothing to reconcile against, nothing to write to, stop'), but after consulting advisor it concluded 'literal execution must proceed to print a NEW proposal' because the skill's only stop clause fires on 'no lesson exists,' not on a missing store. The Final response is a full proposal ('Proposed memory changes: NEW deploy-scripts-require-deploy-env ...'), not a no-op or refusal."}, {"text": "Output includes a 'Proposed project-instructions changes' block targeting AGENTS.md", "passed": false, "evidence": "The Final response block is headed 'Proposed memory changes:' and proposes a memory entry ('NEW deploy-scripts-require-deploy-env'), ending with 'Let me know if this looks right and I'll write it to memory.' There is no 'Proposed project-instructions changes' block and AGENTS.md is never named as a target \u2014 transcript step 1 explicitly notes the loaded skill spec has 'no mention anywhere of a repo project-instructions file,' and step 4 reads AGENTS.md only to check whether the gotcha is already documented there (it isn't), never as a write target."}, {"text": "No memory NEW/EDIT/DROP/FIX operation is attempted", "passed": false, "evidence": "The Final response explicitly drafts a NEW operation: 'NEW   deploy-scripts-require-deploy-env \u2014 scripts/deploy/*.sh (e.g. release.sh) silently deploy to production if DEPLOY_ENV isn't explicitly set...'. No Edit/Write tool call actually executed this (metrics.json shows Edit:0, Write:0 \u2014 it stopped for user go-ahead per the skill's 'propose, then apply' step), but a memory NEW operation was clearly formulated and put forward as the deliverable, which is what this expectation asks not to happen."}, {"text": "reflect does not stage, commit, push, or open a PR", "passed": true, "evidence": "The full tool trace (Read skill spec, Bash ls/find fixture directories, Read AGENTS.md, advisor call) contains no git add/commit/push or gh pr commands. metrics.json shows total_tool_calls:7 with Edit:0, Write:0, and the transcript states explicitly: 'No files under the repo, and no memory files, were created, edited, or deleted.'"}], "notes": []}, {"eval_id": 4, "eval_name": "stale-deploy-pipeline", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 3, "failed": 0, "total": 3, "time_seconds": 136.2, "tokens": 38778, "tool_calls": 9, "errors": 0}, "expectations": [{"text": "Output proposes a DROP or FIX for the deploy-pipeline memory", "passed": true, "evidence": "Final response contains: 'Proposed memory changes: EDIT deploy-pipeline \u2014 deploys now run through GitHub Actions, not CircleCI (migrated last month; `.circleci/config.yml` no longer exists).' The executor used EDIT rather than the literal word FIX, but per the grading instructions EDIT/FIX are treated as synonymous in-place-correction verbs in the skill's own vocabulary (SKILL.md lines 148-150 list EDIT and FIX side by side as valid change-list verbs, both distinct from DROP/NEW). The proposal is an in-place correction of the stale deploy-pipeline memory, not a DROP, but it satisfies the 'DROP or FIX' disjunction under the stated synonym rule."}, {"text": "The change list explains the memory is stale/superseded by the CircleCI-to-GitHub-Actions migration", "passed": true, "evidence": "The change-list entry explicitly states the rationale: 'The current memory still says \"Deploys run through CircleCI, config at `.circleci/config.yml`,\" which would send a future session straight to a dead path. Update it to reflect GitHub Actions as the deploy mechanism and drop the CircleCI reference.' The preceding analysis section also states: 'Rule 2 also applies \u2014 the existing memory is now stale/superseded and must be fixed as part of the change,' directly naming the stale/superseded status and the CircleCI\u2192GitHub Actions migration as the cause."}, {"text": "reflect does not leave the contradicted CircleCI claim unaddressed", "passed": true, "evidence": "The stale CircleCI claim in memory/deploy-pipeline.md ('Deploys run through CircleCI, config at `.circleci/config.yml`') is explicitly surfaced and routed to an EDIT proposal rather than being ignored. The executor also verified via Bash (steps 6-7 in the transcript) that no `.circleci/` or `.github/workflows/` directory exists in the repo fixture and that no CircleCI/GitHub Actions/workflow references appear anywhere in the repo, reinforcing that the memory's claim is dead and must be corrected rather than left standing."}], "notes": []}, {"eval_id": 4, "eval_name": "stale-deploy-pipeline", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 3, "failed": 0, "total": 3, "time_seconds": 104.3, "tokens": 35358, "tool_calls": 8, "errors": 0}, "expectations": [{"text": "Output proposes a DROP or FIX for the deploy-pipeline memory", "passed": true, "evidence": "Transcript final response includes: 'Proposed memory changes: EDIT deploy-pipeline \u2014 update to say deploys run through GitHub Actions (migrated from CircleCI last month); remove the `.circleci/config.yml` reference since that file no longer exists.' This is an in-place correction (EDIT) of the existing deploy-pipeline memory, which the skill's vocabulary treats as a FIX synonym."}, {"text": "The change list explains the memory is stale/superseded by the CircleCI-to-GitHub-Actions migration", "passed": true, "evidence": "Prose preceding the change list states: 'The existing memory deploy-pipeline ... states deploys run through CircleCI at .circleci/config.yml. You confirmed the pipeline was migrated to GitHub Actions last month and the CircleCI config no longer exists. That memory is now stale and would send a future session down a dead path.' The change-list entry itself repeats '(migrated from CircleCI last month)' as the rationale."}, {"text": "reflect does not leave the contradicted CircleCI claim unaddressed", "passed": true, "evidence": "The CircleCI claim is explicitly surfaced as stale and a concrete EDIT is proposed to correct it (replace CircleCI/.circleci/config.yml reference with GitHub Actions). Nothing in the transcript treats the stale claim as acceptable or ignores it."}], "notes": []}, {"eval_id": 6, "eval_name": "team-convention-atref-subfile", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 4, "failed": 0, "total": 4, "time_seconds": 81.5, "tokens": 34783, "tool_calls": 6, "errors": 0}, "expectations": [{"text": "Output includes a 'Proposed project-instructions changes' block with a CLAUDE entry", "passed": true, "evidence": "Final response (transcript.md line 35-39) reads: 'Proposed project-instructions changes (you land these via a normal PR): CLAUDE  docs/testing.md ... existing heading: \"Running tests\" ... Integration tests only run correctly via `pnpm -w test` from the repo root ... why team-durable: ...'. This is a well-formed CLAUDE-type entry, correctly labeled and scoped to an existing heading rather than a new section."}, {"text": "The entry targets docs/testing.md (the existing @-referenced sub-file), not the root CLAUDE.md", "passed": true, "evidence": "The proposed entry is explicitly headed 'CLAUDE  docs/testing.md', not CLAUDE.md. The 'Routing test' analysis section (transcript.md line 29) explicitly reasons: 'CLAUDE.md `@`-references `docs/testing.md` for test conventions, so the resolved target is `docs/testing.md`, amending the existing \"Running tests\" section rather than duplicating or creating a new sub-file.' This shows genuine structure-aware routing: the agent read CLAUDE.md, noticed the `@docs/testing.md` reference, read that sub-file, and routed the new convention to the exact existing 'Running tests' heading inside it rather than defaulting to the root file."}, {"text": "No NEW or EDIT auto-memory entry is proposed for the pnpm test convention", "passed": true, "evidence": "Transcript line 31: 'No memory candidates: nothing personal/session-level surfaced, and the existing empty memory store needs no pruning (no files touched by this candidate).' The final response contains only the CLAUDE project-instructions proposal, no MEMORY NEW/EDIT block. metrics.json confirms 0 Edit and 0 Write tool calls, and the fixture's MEMORY.md file is untouched (still 33 bytes, 'no entries yet')."}, {"text": "reflect does not stage, commit, push, or open a PR \u2014 it stops at proposing/writing the working-tree file", "passed": true, "evidence": "Transcript shows only Read and Bash `find` tool calls (metrics.json: Read=4, total_tool_calls=6, Edit=0, Write=0, files_created=[]). No git add/commit/push or gh pr commands appear anywhere in the transcript. The fixture repo's docs/testing.md on disk is unmodified (still the original 2-line content), and the response explicitly frames the change as something the user will land 'via a normal PR' rather than something reflect did itself. This satisfies the expectation's stated floor (stopping at proposing) and is in fact more conservative than 'writing the working-tree file' \u2014 no destructive or scope-creeping git action occurred."}], "notes": []}, {"eval_id": 6, "eval_name": "team-convention-atref-subfile", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.25, "passed": 1, "failed": 3, "total": 4, "time_seconds": 118.5, "tokens": 36385, "tool_calls": 10, "errors": 0}, "expectations": [{"text": "Output includes a 'Proposed project-instructions changes' block with a CLAUDE entry", "passed": false, "evidence": "Final response only contains a 'Proposed memory changes:' block with a single 'NEW pnpm-workspace-integration-tests' entry. No 'Proposed project-instructions changes' block, and no mention of CLAUDE.md/docs/testing.md as a target anywhere in the output. The transcript's own Analysis section states the reason explicitly: 'Per the skill's own scope (personal auto-memory only, no concept of repo/project-instructions files), the candidate is treated as a new personal memory entry.'"}, {"text": "The entry targets docs/testing.md (the existing @-referenced sub-file), not the root CLAUDE.md", "passed": false, "evidence": "No project-instructions entry of any kind was proposed (see above), so nothing targets docs/testing.md. The skill did read both CLAUDE.md and docs/testing.md (steps 5-6) purely to check for existing documentation of the behavior, not to propose an edit to either file."}, {"text": "No NEW or EDIT auto-memory entry is proposed for the pnpm test convention", "passed": false, "evidence": "Directly contradicted. The output proposes: 'NEW   pnpm-workspace-integration-tests \u2014 in this pnpm-workspace monorepo, integration tests only run when invoked as `pnpm -w test` from the repo root; running `pnpm test` (or any test command) from inside a package directory silently skips them with no error or warning.' This is exactly a NEW auto-memory entry for the pnpm test convention."}, {"text": "reflect does not stage, commit, push, or open a PR \u2014 it stops at proposing/writing the working-tree file", "passed": true, "evidence": "The full tool-call log (steps 1-8) contains only Read and Bash(find/grep) calls for inspection \u2014 no git, no Write/Edit calls, no file was actually written. The run ends with 'Waiting on your go-ahead before writing this.' No staging, committing, pushing, or PR activity occurred. (Note: it also did not write the working-tree file yet, consistent with stopping before any write, which the assertion permits.)"}], "notes": []}, {"eval_id": 2, "eval_name": "trivial-readme-typo", "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 3, "failed": 0, "total": 3, "time_seconds": 217.3, "tokens": 35213, "tool_calls": 7, "errors": 0}, "expectations": [{"text": "reflect explicitly states no memory-worthy content was found", "passed": true, "evidence": "Transcript 'Final response': 'Nothing worth saving from this session. It was a single one-line typo fix (\"recieve\" -> \"receive\") in README.md, done with one Read and one Edit -- no token-wasting detours, no reusable workflow, no blocker, no corrected assumption, and no feedback on working style.' The 'Findings' section explicitly walks through the skill's five scan categories and concludes 'nothing clears the recurring + non-obvious bar,' citing the skill's own early-exit clause ('If none of this happened this session ... say so and stop')."}, {"text": "No NEW, EDIT, DROP, or FIX entries are proposed", "passed": true, "evidence": "Final response states 'No memory or project-instructions changes proposed.' No NEW/EDIT/DROP/FIX-formatted entry appears anywhere in the transcript. outputs_dir contains only transcript.md and metrics.json -- no proposal artifact of any kind."}, {"text": "No memory file is created or edited", "passed": true, "evidence": "metrics.json records Write: 0 and files_created: []. The fixture memory file at /Users/lorcan/dev/reflect-workspace/fixtures/case-2-trivial-readme-typo/memory/MEMORY.md still reads '# Memory Index\\n\\n(no entries yet)' (33 bytes), matching its pre-run state -- confirmed by direct read, not just trusting the transcript."}], "notes": []}, {"eval_id": 2, "eval_name": "trivial-readme-typo", "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 3, "failed": 0, "total": 3, "time_seconds": 72.6, "tokens": 31707, "tool_calls": 2, "errors": 0}, "expectations": [{"text": "reflect explicitly states no memory-worthy content was found", "passed": true, "evidence": "Final response: 'Nothing in this session clears the bar for a memory. ... That's not a token-wasting detour, not a reusable multi-step workflow, and not a blocker \u2014 it's just a normal, cheap edit.' The transcript also explicitly walks through the skill's five review criteria (token-wasting detours, reusable workflows, blockers, wrong assumptions corrected, user feedback) and marks each 'none.'"}, {"text": "No NEW, EDIT, DROP, or FIX entries are proposed", "passed": true, "evidence": "Final response states: 'No memory changes proposed \u2014 stopping here rather than manufacturing a note to justify running.' No NEW/EDIT/DROP/FIX entry syntax or proposal appears anywhere in the transcript."}, {"text": "No memory file is created or edited", "passed": true, "evidence": "metrics.json shows Edit: 0, Write: 0, files_created: []. Transcript step 3 only reads memory/MEMORY.md (does not modify it). Direct inspection of /Users/lorcan/dev/reflect-workspace/fixtures/case-2-trivial-readme-typo/memory/ confirms only the original MEMORY.md exists, still containing '(no entries yet)' \u2014 unchanged from before the run."}], "notes": []}], "run_summary": {"with_skill": {"pass_rate": {"mean": 1.0, "stddev": 0.0, "min": 1.0, "max": 1.0}, "time_seconds": {"mean": 168.9143, "stddev": 66.1052, "min": 81.5, "max": 277.9}, "tokens": {"mean": 38081.4286, "stddev": 2763.5302, "min": 34783, "max": 41813}}, "without_skill": {"pass_rate": {"mean": 0.8214, "stddev": 0.3134, "min": 0.25, "max": 1.0}, "time_seconds": {"mean": 142.6429, "stddev": 81.0676, "min": 72.6, "max": 320.6}, "tokens": {"mean": 36374.7143, "stddev": 2659.2153, "min": 31707, "max": 40315}}, "delta": {"pass_rate": "+0.18", "time_seconds": "+26.3", "tokens": "+1707"}}, "notes": ["with_skill = current rewritten SKILL.md (structure-aware routing to auto-memory or repo CLAUDE.md/AGENTS.md/@-referenced sub-file). without_skill = pre-rewrite SKILL.md snapshot from git HEAD (auto-memory only, no routing concept) -- an 'old version' baseline, not a no-skill baseline.", "Cases 1-5 (pre-existing behavior) pass 100% on BOTH configurations -- the rewrite preserved all prior behavior with no regression.", "Cases 6-7 (new project-instructions routing feature) pass 4/4 on with_skill but only 1/4 and 2/4 on without_skill -- confirms the rewrite closes a real gap (old skill misfiled a repo convention into personal memory in case 6, and proposed writing into a non-existent memory store in case 7) rather than a hypothetical one.", "Cases 1 and 5 are the discriminator pair for over-routing risk (external API gotcha, and generic working-style feedback) -- both correctly stayed in auto-memory on with_skill, including case 1 where the fixture's own CLAUDE.md deliberately mentions the API name as a routing trap.", "Recurring eval-harness observation: several executor runs used Bash (find/ls) instead of Glob for fixture discovery, a self-disclosed deviation from the skill's Read/Grep/Glob/Edit/Write allowed-tools scope. Not a correctness failure in any case, but worth tightening in a future eval-harness revision so it doesn't mask a real allowed-tools violation.", "Grader-flagged eval-design gap: case 1's assertions don't explicitly check that no project-instructions/CLAUDE.md block is also proposed alongside the memory entry, even though the fixture is a deliberate routing trap for that. Same gap noted for case 5. Recommend adding an explicit negative assertion to both before the next iteration."]}};
+
+    // ---- State ----
+    let feedbackMap = {};  // run_id -> feedback text
+    let currentIndex = 0;
+    let visitedRuns = new Set();
+
+    // ---- Init ----
+    async function init() {
+      // Load saved feedback from server — but only if this isn't a fresh
+      // iteration (indicated by previous_feedback being present). When
+      // previous feedback exists, the feedback.json on disk is stale from
+      // the prior iteration and should not pre-fill the textareas.
+      const hasPrevious = Object.keys(EMBEDDED_DATA.previous_feedback || {}).length > 0
+        || Object.keys(EMBEDDED_DATA.previous_outputs || {}).length > 0;
+      if (!hasPrevious) {
+        try {
+          const resp = await fetch("/api/feedback");
+          const data = await resp.json();
+          if (data.reviews) {
+            for (const r of data.reviews) feedbackMap[r.run_id] = r.feedback;
+          }
+        } catch { /* first run, no feedback yet */ }
+      }
+
+      document.getElementById("skill-name").textContent = EMBEDDED_DATA.skill_name;
+      showRun(0);
+
+      // Wire up feedback auto-save
+      const textarea = document.getElementById("feedback");
+      let saveTimeout = null;
+      textarea.addEventListener("input", () => {
+        clearTimeout(saveTimeout);
+        document.getElementById("feedback-status").textContent = "";
+        saveTimeout = setTimeout(() => saveCurrentFeedback(), 800);
+      });
+    }
+
+    // ---- Navigation ----
+    function navigate(delta) {
+      const newIndex = currentIndex + delta;
+      if (newIndex >= 0 && newIndex < EMBEDDED_DATA.runs.length) {
+        saveCurrentFeedback();
+        showRun(newIndex);
+      }
+    }
+
+    function updateNavButtons() {
+      document.getElementById("prev-btn").disabled = currentIndex === 0;
+      document.getElementById("next-btn").disabled =
+        currentIndex === EMBEDDED_DATA.runs.length - 1;
+    }
+
+    // ---- Show a run ----
+    function showRun(index) {
+      currentIndex = index;
+      const run = EMBEDDED_DATA.runs[index];
+
+      // Progress
+      document.getElementById("progress").textContent =
+        `${index + 1} of ${EMBEDDED_DATA.runs.length}`;
+
+      // Prompt
+      document.getElementById("prompt-text").textContent = run.prompt;
+
+      // Config badge
+      const badge = document.getElementById("config-badge");
+      const configMatch = run.id.match(/(with_skill|without_skill|new_skill|old_skill)/);
+      if (configMatch) {
+        const config = configMatch[1];
+        const isBaseline = config === "without_skill" || config === "old_skill";
+        badge.textContent = config.replace(/_/g, " ");
+        badge.className = "config-badge " + (isBaseline ? "config-baseline" : "config-primary");
+        badge.style.display = "inline-block";
+      } else {
+        badge.style.display = "none";
+      }
+
+      // Outputs
+      renderOutputs(run);
+
+      // Previous outputs
+      renderPrevOutputs(run);
+
+      // Grades
+      renderGrades(run);
+
+      // Previous feedback
+      const prevFb = (EMBEDDED_DATA.previous_feedback || {})[run.id];
+      const prevEl = document.getElementById("prev-feedback");
+      if (prevFb) {
+        document.getElementById("prev-feedback-text").textContent = prevFb;
+        prevEl.style.display = "block";
+      } else {
+        prevEl.style.display = "none";
+      }
+
+      // Feedback
+      document.getElementById("feedback").value = feedbackMap[run.id] || "";
+      document.getElementById("feedback-status").textContent = "";
+
+      updateNavButtons();
+
+      // Track visited runs and promote done button when all visited
+      visitedRuns.add(index);
+      const doneBtn = document.getElementById("done-btn");
+      if (visitedRuns.size >= EMBEDDED_DATA.runs.length) {
+        doneBtn.classList.add("ready");
+      }
+
+      // Scroll main content to top
+      document.querySelector(".main").scrollTop = 0;
+    }
+
+    // ---- Render outputs ----
+    function renderOutputs(run) {
+      const container = document.getElementById("outputs-body");
+      container.innerHTML = "";
+
+      const outputs = run.outputs || [];
+      if (outputs.length === 0) {
+        container.innerHTML = '<div class="empty-state">No output files</div>';
+        return;
+      }
+
+      for (const file of outputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        // Always show file header with download link
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const content = document.createElement("div");
+        content.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          content.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          content.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          content.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(content, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          content.appendChild(a);
+        } else if (file.type === "error") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          pre.style.color = "var(--red)";
+          content.appendChild(pre);
+        }
+
+        fileDiv.appendChild(content);
+        container.appendChild(fileDiv);
+      }
+    }
+
+    // ---- XLSX rendering via SheetJS ----
+    function renderXlsx(container, b64Data) {
+      try {
+        const raw = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
+        const wb = XLSX.read(raw, { type: "array" });
+
+        for (let i = 0; i < wb.SheetNames.length; i++) {
+          const sheetName = wb.SheetNames[i];
+          const ws = wb.Sheets[sheetName];
+
+          if (wb.SheetNames.length > 1) {
+            const sheetLabel = document.createElement("div");
+            sheetLabel.style.cssText =
+              "font-weight:600; font-size:0.8rem; color:#b0aea5; margin-top:0.5rem; margin-bottom:0.25rem;";
+            sheetLabel.textContent = "Sheet: " + sheetName;
+            container.appendChild(sheetLabel);
+          }
+
+          const htmlStr = XLSX.utils.sheet_to_html(ws, { editable: false });
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = htmlStr;
+          container.appendChild(wrapper);
+        }
+      } catch (err) {
+        container.textContent = "Error rendering spreadsheet: " + err.message;
+      }
+    }
+
+    // ---- Grades ----
+    function renderGrades(run) {
+      const section = document.getElementById("grades-section");
+      const content = document.getElementById("grades-content");
+
+      if (!run.grading) {
+        section.style.display = "none";
+        return;
+      }
+
+      const grading = run.grading;
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("grades-arrow").classList.remove("open");
+
+      const summary = grading.summary || {};
+      const expectations = grading.expectations || [];
+
+      let html = '<div style="padding: 1rem;">';
+
+      // Summary line
+      const passRate = summary.pass_rate != null
+        ? Math.round(summary.pass_rate * 100) + "%"
+        : "?";
+      const badgeClass = summary.pass_rate >= 0.8 ? "grade-pass" : summary.pass_rate >= 0.5 ? "" : "grade-fail";
+      html += '<div class="grades-summary">';
+      html += '<span class="grade-badge ' + badgeClass + '">' + passRate + '</span>';
+      html += '<span>' + (summary.passed || 0) + ' passed, ' + (summary.failed || 0) + ' failed of ' + (summary.total || 0) + '</span>';
+      html += '</div>';
+
+      // Assertions list
+      html += '<ul class="assertion-list">';
+      for (const exp of expectations) {
+        const statusClass = exp.passed ? "pass" : "fail";
+        const statusIcon = exp.passed ? "\u2713" : "\u2717";
+        html += '<li class="assertion-item">';
+        html += '<span class="assertion-status ' + statusClass + '">' + statusIcon + '</span>';
+        html += '<span>' + escapeHtml(exp.text) + '</span>';
+        if (exp.evidence) {
+          html += '<div class="assertion-evidence">' + escapeHtml(exp.evidence) + '</div>';
+        }
+        html += '</li>';
+      }
+      html += '</ul>';
+
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function toggleGrades() {
+      const content = document.getElementById("grades-content");
+      const arrow = document.getElementById("grades-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Previous outputs (collapsible) ----
+    function renderPrevOutputs(run) {
+      const section = document.getElementById("prev-outputs-section");
+      const content = document.getElementById("prev-outputs-content");
+      const prevOutputs = (EMBEDDED_DATA.previous_outputs || {})[run.id];
+
+      if (!prevOutputs || prevOutputs.length === 0) {
+        section.style.display = "none";
+        return;
+      }
+
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("prev-outputs-arrow").classList.remove("open");
+
+      // Render the files into the content area
+      content.innerHTML = "";
+      const wrapper = document.createElement("div");
+      wrapper.style.padding = "1rem";
+
+      for (const file of prevOutputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const fc = document.createElement("div");
+        fc.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          fc.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          fc.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          fc.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(fc, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          fc.appendChild(a);
+        }
+
+        fileDiv.appendChild(fc);
+        wrapper.appendChild(fileDiv);
+      }
+
+      content.appendChild(wrapper);
+    }
+
+    function togglePrevOutputs() {
+      const content = document.getElementById("prev-outputs-content");
+      const arrow = document.getElementById("prev-outputs-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Feedback (saved to server -> feedback.json) ----
+    function saveCurrentFeedback() {
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // Build reviews array from map
+      const reviews = [];
+      for (const [run_id, feedback] of Object.entries(feedbackMap)) {
+        if (feedback.trim()) {
+          reviews.push({ run_id, feedback, timestamp: new Date().toISOString() });
+        }
+      }
+
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviews, status: "in_progress" }),
+      }).then(() => {
+        document.getElementById("feedback-status").textContent = "Saved";
+      }).catch(() => {
+        // Static mode or server unavailable — no-op on auto-save,
+        // feedback will be downloaded on final submit
+        document.getElementById("feedback-status").textContent = "Will download on submit";
+      });
+    }
+
+    // ---- Done ----
+    function showDoneDialog() {
+      // Save current textarea to feedbackMap (but don't POST yet)
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // POST once with status: complete — include ALL runs so the model
+      // can distinguish "no feedback" (looks good) from "not reviewed"
+      const reviews = [];
+      const ts = new Date().toISOString();
+      for (const r of EMBEDDED_DATA.runs) {
+        reviews.push({ run_id: r.id, feedback: feedbackMap[r.id] || "", timestamp: ts });
+      }
+      const payload = JSON.stringify({ reviews, status: "complete" }, null, 2);
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      }).then(() => {
+        document.getElementById("done-overlay").classList.add("visible");
+      }).catch(() => {
+        // Server not available (static mode) — download as file
+        const blob = new Blob([payload], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "feedback.json";
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById("done-overlay").classList.add("visible");
+      });
+    }
+
+    function closeDoneDialog() {
+      // Reset status back to in_progress
+      saveCurrentFeedback();
+      document.getElementById("done-overlay").classList.remove("visible");
+    }
+
+    // ---- Toast ----
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      setTimeout(() => toast.classList.remove("visible"), 2000);
+    }
+
+    // ---- Keyboard nav ----
+    document.addEventListener("keydown", (e) => {
+      // Don't capture when typing in textarea
+      if (e.target.tagName === "TEXTAREA") return;
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        navigate(-1);
+      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        navigate(1);
+      }
+    });
+
+    // ---- Util ----
+    function getDownloadUri(file) {
+      if (file.data_uri) return file.data_uri;
+      if (file.data_b64) return "data:application/octet-stream;base64," + file.data_b64;
+      if (file.type === "text") return "data:text/plain;charset=utf-8," + encodeURIComponent(file.content);
+      return "#";
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ---- View switching ----
+    function switchView(view) {
+      document.querySelectorAll(".view-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+      document.querySelector(`[onclick="switchView('${view}')"]`).classList.add("active");
+      document.getElementById("panel-" + view).classList.add("active");
+    }
+
+    // ---- Benchmark rendering ----
+    function renderBenchmark() {
+      const data = EMBEDDED_DATA.benchmark;
+      if (!data) return;
+
+      // Show the tabs
+      document.getElementById("view-tabs").style.display = "flex";
+
+      const container = document.getElementById("benchmark-content");
+      const summary = data.run_summary || {};
+      const metadata = data.metadata || {};
+      const notes = data.notes || [];
+
+      let html = "";
+
+      // Header
+      html += "<h2 style='font-family: Poppins, sans-serif; margin-bottom: 0.5rem;'>Benchmark Results</h2>";
+      html += "<p style='color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;'>";
+      if (metadata.skill_name) html += "<strong>" + escapeHtml(metadata.skill_name) + "</strong> &mdash; ";
+      if (metadata.timestamp) html += metadata.timestamp + " &mdash; ";
+      if (metadata.evals_run) html += "Evals: " + metadata.evals_run.join(", ") + " &mdash; ";
+      html += (metadata.runs_per_configuration || "?") + " runs per configuration";
+      html += "</p>";
+
+      // Summary table
+      html += '<table class="benchmark-table">';
+
+      function fmtStat(stat, pct) {
+        if (!stat) return "—";
+        const suffix = pct ? "%" : "";
+        const m = pct ? (stat.mean * 100).toFixed(0) : stat.mean.toFixed(1);
+        const s = pct ? (stat.stddev * 100).toFixed(0) : stat.stddev.toFixed(1);
+        return m + suffix + " ± " + s + suffix;
+      }
+
+      function deltaClass(val) {
+        if (!val) return "";
+        const n = parseFloat(val);
+        if (n > 0) return "benchmark-delta-positive";
+        if (n < 0) return "benchmark-delta-negative";
+        return "";
+      }
+
+      // Discover config names dynamically (everything except "delta")
+      const configs = Object.keys(summary).filter(k => k !== "delta");
+      const configA = configs[0] || "config_a";
+      const configB = configs[1] || "config_b";
+      const labelA = configA.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const labelB = configB.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const a = summary[configA] || {};
+      const b = summary[configB] || {};
+      const delta = summary.delta || {};
+
+      html += "<thead><tr><th>Metric</th><th>" + escapeHtml(labelA) + "</th><th>" + escapeHtml(labelB) + "</th><th>Delta</th></tr></thead>";
+      html += "<tbody>";
+
+      html += "<tr><td><strong>Pass Rate</strong></td>";
+      html += "<td>" + fmtStat(a.pass_rate, true) + "</td>";
+      html += "<td>" + fmtStat(b.pass_rate, true) + "</td>";
+      html += '<td class="' + deltaClass(delta.pass_rate) + '">' + (delta.pass_rate || "—") + "</td></tr>";
+
+      // Time (only show row if data exists)
+      if (a.time_seconds || b.time_seconds) {
+        html += "<tr><td><strong>Time (s)</strong></td>";
+        html += "<td>" + fmtStat(a.time_seconds, false) + "</td>";
+        html += "<td>" + fmtStat(b.time_seconds, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.time_seconds) + '">' + (delta.time_seconds ? delta.time_seconds + "s" : "—") + "</td></tr>";
+      }
+
+      // Tokens (only show row if data exists)
+      if (a.tokens || b.tokens) {
+        html += "<tr><td><strong>Tokens</strong></td>";
+        html += "<td>" + fmtStat(a.tokens, false) + "</td>";
+        html += "<td>" + fmtStat(b.tokens, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.tokens) + '">' + (delta.tokens || "—") + "</td></tr>";
+      }
+
+      html += "</tbody></table>";
+
+      // Per-eval breakdown (if runs data available)
+      const runs = data.runs || [];
+      if (runs.length > 0) {
+        const evalIds = [...new Set(runs.map(r => r.eval_id))].sort((a, b) => a - b);
+
+        html += "<h3 style='font-family: Poppins, sans-serif; margin-bottom: 0.75rem;'>Per-Eval Breakdown</h3>";
+
+        const hasTime = runs.some(r => r.result && r.result.time_seconds != null);
+        const hasErrors = runs.some(r => r.result && r.result.errors > 0);
+
+        for (const evalId of evalIds) {
+          const evalRuns = runs.filter(r => r.eval_id === evalId);
+          const evalName = evalRuns[0] && evalRuns[0].eval_name ? evalRuns[0].eval_name : "Eval " + evalId;
+
+          html += "<h4 style='font-family: Poppins, sans-serif; margin: 1rem 0 0.5rem; color: var(--text);'>" + escapeHtml(evalName) + "</h4>";
+          html += '<table class="benchmark-table">';
+          html += "<thead><tr><th>Config</th><th>Run</th><th>Pass Rate</th>";
+          if (hasTime) html += "<th>Time (s)</th>";
+          if (hasErrors) html += "<th>Crashes During Execution</th>";
+          html += "</tr></thead>";
+          html += "<tbody>";
+
+          // Group by config and render with average rows
+          const configGroups = [...new Set(evalRuns.map(r => r.configuration))];
+          for (let ci = 0; ci < configGroups.length; ci++) {
+            const config = configGroups[ci];
+            const configRuns = evalRuns.filter(r => r.configuration === config);
+            if (configRuns.length === 0) continue;
+
+            const rowClass = ci === 0 ? "benchmark-row-with" : "benchmark-row-without";
+            const configLabel = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+            for (const run of configRuns) {
+              const r = run.result || {};
+              const prClass = r.pass_rate >= 0.8 ? "benchmark-delta-positive" : r.pass_rate < 0.5 ? "benchmark-delta-negative" : "";
+              html += '<tr class="' + rowClass + '">';
+              html += "<td>" + configLabel + "</td>";
+              html += "<td>" + run.run_number + "</td>";
+              html += '<td class="' + prClass + '">' + ((r.pass_rate || 0) * 100).toFixed(0) + "% (" + (r.passed || 0) + "/" + (r.total || 0) + ")</td>";
+              if (hasTime) html += "<td>" + (r.time_seconds != null ? r.time_seconds.toFixed(1) : "—") + "</td>";
+              if (hasErrors) html += "<td>" + (r.errors || 0) + "</td>";
+              html += "</tr>";
+            }
+
+            // Average row
+            const rates = configRuns.map(r => (r.result || {}).pass_rate || 0);
+            const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
+            const avgPrClass = avgRate >= 0.8 ? "benchmark-delta-positive" : avgRate < 0.5 ? "benchmark-delta-negative" : "";
+            html += '<tr class="benchmark-row-avg ' + rowClass + '">';
+            html += "<td>" + configLabel + "</td>";
+            html += "<td>Avg</td>";
+            html += '<td class="' + avgPrClass + '">' + (avgRate * 100).toFixed(0) + "%</td>";
+            if (hasTime) {
+              const times = configRuns.map(r => (r.result || {}).time_seconds).filter(t => t != null);
+              html += "<td>" + (times.length ? (times.reduce((a, b) => a + b, 0) / times.length).toFixed(1) : "—") + "</td>";
+            }
+            if (hasErrors) html += "<td></td>";
+            html += "</tr>";
+          }
+          html += "</tbody></table>";
+
+          // Per-assertion detail for this eval
+          const runsWithExpectations = {};
+          for (const config of configGroups) {
+            runsWithExpectations[config] = evalRuns.filter(r => r.configuration === config && r.expectations && r.expectations.length > 0);
+          }
+          const hasAnyExpectations = Object.values(runsWithExpectations).some(runs => runs.length > 0);
+          if (hasAnyExpectations) {
+            // Collect all unique assertion texts across all configs
+            const allAssertions = [];
+            const seen = new Set();
+            for (const config of configGroups) {
+              for (const run of runsWithExpectations[config]) {
+                for (const exp of (run.expectations || [])) {
+                  if (!seen.has(exp.text)) {
+                    seen.add(exp.text);
+                    allAssertions.push(exp.text);
+                  }
+                }
+              }
+            }
+
+            html += '<table class="benchmark-table" style="margin-top: 0.5rem;">';
+            html += "<thead><tr><th>Assertion</th>";
+            for (const config of configGroups) {
+              const label = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+              html += "<th>" + escapeHtml(label) + "</th>";
+            }
+            html += "</tr></thead><tbody>";
+
+            for (const assertionText of allAssertions) {
+              html += "<tr><td>" + escapeHtml(assertionText) + "</td>";
+
+              for (const config of configGroups) {
+                html += "<td>";
+                for (const run of runsWithExpectations[config]) {
+                  const exp = (run.expectations || []).find(e => e.text === assertionText);
+                  if (exp) {
+                    const cls = exp.passed ? "benchmark-delta-positive" : "benchmark-delta-negative";
+                    const icon = exp.passed ? "\u2713" : "\u2717";
+                    html += '<span class="' + cls + '" title="Run ' + run.run_number + ': ' + escapeHtml(exp.evidence || "") + '">' + icon + "</span> ";
+                  } else {
+                    html += "— ";
+                  }
+                }
+                html += "</td>";
+              }
+              html += "</tr>";
+            }
+            html += "</tbody></table>";
+          }
+        }
+      }
+
+      // Notes
+      if (notes.length > 0) {
+        html += '<div class="benchmark-notes">';
+        html += "<h3>Analysis Notes</h3>";
+        html += "<ul>";
+        for (const note of notes) {
+          html += "<li>" + escapeHtml(note) + "</li>";
+        }
+        html += "</ul></div>";
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ---- Start ----
+    init();
+    renderBenchmark();
+  </script>
+</body>
+</html>

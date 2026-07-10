@@ -20,6 +20,12 @@ filtering logic works against that purpose and will get pushed back on, even
 if the change is well-intentioned. Prefer edits that make the filter
 *stricter* over ones that make it more permissive.
 
+Routing a survivor to the project-instructions file is a sort applied *after*
+the filter, not a second inbox — a lesson must clear the same bar before it's
+routed anywhere, and that file must never become a way to write more than the
+filter already allows. `reflect` proposes and, at most, writes the working
+tree; it never stages, commits, pushes, or opens the PR itself.
+
 Never add `context: fork` to `SKILL.md`. `reflect` works by reading the
 session transcript and memory index already in context — a forked subagent
 starts with neither and would silently produce empty or fabricated results.

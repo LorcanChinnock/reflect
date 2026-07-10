@@ -4,12 +4,13 @@
     {
       "id": 1,
       "prompt": "Simulate the following session, then run /reflect on it.\n\nSession transcript: the user asked you to call the `acme` internal API. You tried `GET /v1/users/{id}` with a bearer token and got a 401. After three failed attempts you discovered the API also requires an `X-Client-Id` header on every request, undocumented outside a support forum post. Once you added the header, the call succeeded and the task finished. The existing memory index (MEMORY.md) has no entry about the acme API.",
-      "expected_output": "reflect identifies the X-Client-Id header discovery as a token-wasting detour, proposes exactly one NEW memory capturing the concrete fix (header name, when it's needed), prints the 'Proposed memory changes:' change list, and does not write any memory file until approval is given.",
+      "expected_output": "reflect identifies the X-Client-Id header discovery as a token-wasting detour, proposes exactly one NEW memory capturing the concrete fix (header name, when it's needed), prints the 'Proposed memory changes:' change list, and does not write any memory file until approval is given. No project-instructions/CLAUDE.md change is proposed, even though the repo's CLAUDE.md happens to mention the acme API by name — this is an external API gotcha, not a repo-wide convention.",
       "expectations": [
         "Output includes a 'Proposed memory changes:' block",
         "Exactly one NEW entry is proposed for the acme API auth header",
         "The proposed memory content states the exact header name X-Client-Id",
-        "No memory file is created or edited before the change list is shown"
+        "No memory file is created or edited before the change list is shown",
+        "No 'Proposed project-instructions changes' block is proposed for this lesson"
       ]
     },
     {
@@ -45,11 +46,34 @@
     {
       "id": 5,
       "prompt": "Simulate the following session, then run /reflect on it.\n\nSession transcript: the user pointed out that you kept guessing at a config file path instead of asking, wasting several turns, and told you: 'next time, just ask me for the path if you're not sure, don't guess.' The existing memory index has no entry about this kind of feedback for this user.",
-      "expected_output": "reflect captures this as user feedback on working style (not a token-wasting detour about a specific file), proposing a NEW memory that generalizes the trigger ('when unsure of a path/config location') while keeping the instruction concrete ('ask, don't guess').",
+      "expected_output": "reflect captures this as user feedback on working style (not a token-wasting detour about a specific file), proposing a NEW memory that generalizes the trigger ('when unsure of a path/config location') while keeping the instruction concrete ('ask, don't guess'). No project-instructions/CLAUDE.md change is proposed — this is personal working-style feedback, not a repo-wide convention.",
       "expectations": [
         "Output proposes a NEW memory categorized as user feedback on working style",
         "The proposed memory generalizes when it applies, not just this one file path",
-        "The change list is shown before any file is written"
+        "The change list is shown before any file is written",
+        "No 'Proposed project-instructions changes' block is proposed for this lesson"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Simulate the following session, then run /reflect on it.\n\nSession transcript: while working in this repo, you discovered that integration tests only run correctly via `pnpm -w test` from the repo root — running them from any package subdirectory silently skips them with no error. This is genuinely new, recurring, and non-obvious. The existing memory index (MEMORY.md) has no related entry. The repo's CLAUDE.md contains only a short intro paragraph and a line `See @docs/testing.md for test conventions.` — i.e. it splits into @-referenced sub-files, and docs/testing.md already exists with a 'Running tests' section.",
+      "expected_output": "reflect recognizes this as a repo-wide build/test convention everyone working in this repo needs, not a personal quirk. It proposes a 'Proposed project-instructions changes' entry targeting docs/testing.md (the existing @-referenced sub-file, under its 'Running tests' section) rather than bloating the root CLAUDE.md or writing a personal auto-memory. No NEW or EDIT auto-memory entry is proposed for this lesson, and reflect does not stage, commit, push, or open a PR.",
+      "expectations": [
+        "Output includes a 'Proposed project-instructions changes' block with a CLAUDE entry",
+        "The entry targets docs/testing.md (the existing @-referenced sub-file), not the root CLAUDE.md",
+        "No NEW or EDIT auto-memory entry is proposed for the pnpm test convention",
+        "reflect does not stage, commit, push, or open a PR — it stops at proposing/writing the working-tree file"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Simulate the following session, then run /reflect on it.\n\nSession transcript: auto-memory is disabled and no memory index was injected for this session. While working in this repo, you discovered that all deploy scripts must be run with `DEPLOY_ENV` explicitly set, or they silently deploy to production — a repo-wide convention, genuinely new and non-obvious. The repo has no CLAUDE.md, but has an AGENTS.md with a 'Deployment' section.",
+      "expected_output": "reflect does not no-op just because auto-memory is off. It scans the session anyway, recognizes the DEPLOY_ENV requirement as a repo-wide convention, and proposes a 'Proposed project-instructions changes' entry targeting AGENTS.md's 'Deployment' section. No memory operation is attempted since there is no memory store to curate.",
+      "expectations": [
+        "reflect does not stop/no-op solely because auto-memory is off",
+        "Output includes a 'Proposed project-instructions changes' block targeting AGENTS.md",
+        "No memory NEW/EDIT/DROP/FIX operation is attempted",
+        "reflect does not stage, commit, push, or open a PR"
       ]
     }
   ]
