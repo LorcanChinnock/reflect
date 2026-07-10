@@ -1,0 +1,15 @@
+<svg viewBox="0 0 64 64" width="64" height="64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="reflect">
+  <title>reflect</title>
+  <!-- shears: pruning down to what's worth keeping -->
+  <g fill="none" stroke="#C2673F" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- blade from top-left tip, through the pivot, to the bottom-right handle -->
+    <path d="M14 9 L32 31 L44 49" />
+    <!-- blade from top-right tip, through the pivot, to the bottom-left handle -->
+    <path d="M50 9 L32 31 L20 49" />
+    <!-- handle loops -->
+    <circle cx="16" cy="52" r="7" />
+    <circle cx="48" cy="52" r="7" />
+  </g>
+  <!-- pivot screw -->
+  <circle cx="32" cy="31" r="3" fill="#C2673F" />
+</svg>

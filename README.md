@@ -1,4 +1,6 @@
-![reflect](./assets/reflecthero.png)
+<img src="./assets/logo.svg" width="64" height="64" alt="" />
+
+# reflect
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
