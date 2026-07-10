@@ -68,6 +68,37 @@ Nothing is written until you approve the list.
 
 See [SKILL.md](./SKILL.md) for the full behavior spec.
 
+## Reliability & evals
+
+`reflect`'s core contract is pinned down as gradeable cases in
+[`evals/evals.json`](./evals/evals.json): it saves a real detour as one lean
+`NEW` entry, stays silent on a trivial session, `EDIT`s instead of duplicating
+an already-covered topic, `DROP`s or fixes a contradicted memory instead of
+leaving it stale, and never writes before showing the change list.
+
+Run the suite with the
+[`skill-creator`](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/skill-creator)
+plugin:
+
+```
+/plugin install skill-creator@claude-plugins-official
+evaluate the reflect skill with skill-creator
+```
+
+Each case runs in an isolated subagent and is graded pass/fail with evidence.
+Run the suite before merging any change to `SKILL.md`'s behavior, and use
+skill-creator's version-comparison mode to confirm an edit is actually an
+improvement rather than a regression in disguise.
+
+`allowed-tools` in `SKILL.md` is scoped to `Read, Grep, Glob, Edit, Write` —
+enough to read the memory index and write memory files without a permission
+prompt on every run. Deleting a memory file still requires `Bash(rm ...)`,
+which is intentionally left off the allowlist, so a `DROP` always prompts you.
+
+`reflect` must run inline, never forked (`context: fork`) — it depends on
+already having the session transcript and memory index in context, which a
+forked subagent would not have.
+
 ## Contributing
 
 Bug reports and small, focused proposals are welcome — see

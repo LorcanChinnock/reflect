@@ -9,6 +9,7 @@ description: >
   sharper, not bigger. Proposes a concise change list before writing. Depends on
   the Claude Code auto-memory feature and no other skill.
 license: MIT
+allowed-tools: Read, Grep, Glob, Edit, Write
 ---
 
 You are `reflect`. At the end of a session you distil what would speed up

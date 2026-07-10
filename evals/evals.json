@@ -1,0 +1,56 @@
+{
+  "skill_name": "reflect",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Simulate the following session, then run /reflect on it.\n\nSession transcript: the user asked you to call the `acme` internal API. You tried `GET /v1/users/{id}` with a bearer token and got a 401. After three failed attempts you discovered the API also requires an `X-Client-Id` header on every request, undocumented outside a support forum post. Once you added the header, the call succeeded and the task finished. The existing memory index (MEMORY.md) has no entry about the acme API.",
+      "expected_output": "reflect identifies the X-Client-Id header discovery as a token-wasting detour, proposes exactly one NEW memory capturing the concrete fix (header name, when it's needed), prints the 'Proposed memory changes:' change list, and does not write any memory file until approval is given.",
+      "expectations": [
+        "Output includes a 'Proposed memory changes:' block",
+        "Exactly one NEW entry is proposed for the acme API auth header",
+        "The proposed memory content states the exact header name X-Client-Id",
+        "No memory file is created or edited before the change list is shown"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Simulate the following session, then run /reflect on it.\n\nSession transcript: the user asked you to fix a typo in a README. You located the file with one Read call, made the edit, and confirmed it. Nothing else happened. The existing memory index (MEMORY.md) is unrelated to this task.",
+      "expected_output": "reflect recognizes there is nothing recurring or non-obvious to save, states that explicitly, and proposes no changes.",
+      "expectations": [
+        "reflect explicitly states no memory-worthy content was found",
+        "No NEW, EDIT, DROP, or FIX entries are proposed",
+        "No memory file is created or edited"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Simulate the following session, then run /reflect on it.\n\nSession transcript: the user was debugging why `npm test` hangs in this repo. After investigation, you found it's because the test config spawns a watcher by default unless `CI=true` is set. This matches an existing memory file `npm-test-config.md` (name: npm-test-config) which already documents that `npm test` requires `--ci` flag, but does not mention the `CI=true` env var alternative.",
+      "expected_output": "reflect recognizes this topic is already covered by npm-test-config and proposes an EDIT to fold in the CI=true detail, not a new NEW memory file for the same topic.",
+      "expectations": [
+        "Output proposes an EDIT to the existing npm-test-config memory, not a NEW file",
+        "The proposed change list explains why EDIT was chosen over NEW (already covered)",
+        "No duplicate memory file is created for the same topic"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Simulate the following session, then run /reflect on it.\n\nSession transcript: the user confirmed that the project's deploy pipeline was migrated last month from CircleCI to GitHub Actions, and the CircleCI config no longer exists. An existing memory file `deploy-pipeline.md` still says 'deploys run through CircleCI, config at .circleci/config.yml'.",
+      "expected_output": "reflect identifies the existing deploy-pipeline memory as stale/contradicted and proposes a DROP or FIX to correct it, rather than leaving the stale memory in place alongside a new one.",
+      "expectations": [
+        "Output proposes a DROP or FIX for the deploy-pipeline memory",
+        "The change list explains the memory is stale/superseded by the CircleCI-to-GitHub-Actions migration",
+        "reflect does not leave the contradicted CircleCI claim unaddressed"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Simulate the following session, then run /reflect on it.\n\nSession transcript: the user pointed out that you kept guessing at a config file path instead of asking, wasting several turns, and told you: 'next time, just ask me for the path if you're not sure, don't guess.' The existing memory index has no entry about this kind of feedback for this user.",
+      "expected_output": "reflect captures this as user feedback on working style (not a token-wasting detour about a specific file), proposing a NEW memory that generalizes the trigger ('when unsure of a path/config location') while keeping the instruction concrete ('ask, don't guess').",
+      "expectations": [
+        "Output proposes a NEW memory categorized as user feedback on working style",
+        "The proposed memory generalizes when it applies, not just this one file path",
+        "The change list is shown before any file is written"
+      ]
+    }
+  ]
+}

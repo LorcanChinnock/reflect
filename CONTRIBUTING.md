@@ -20,9 +20,17 @@ filtering logic works against that purpose and will get pushed back on, even
 if the change is well-intentioned. Prefer edits that make the filter
 *stricter* over ones that make it more permissive.
 
+Never add `context: fork` to `SKILL.md`. `reflect` works by reading the
+session transcript and memory index already in context — a forked subagent
+starts with neither and would silently produce empty or fabricated results.
+This has come up before as an "optimization" idea; it isn't one.
+
 ## Pull requests
 
 - Keep the diff scoped to the change described in the linked issue.
 - Update `SKILL.md` and `README.md` together if behavior changes — they
   should never describe different behavior.
+- Run the evals in `evals/evals.json` before and after your change (see
+  README's "Reliability & evals") and include the result in the PR
+  description. A change that regresses a passing case needs a strong reason.
 - Add a `CHANGELOG.md` entry under `Unreleased`.
