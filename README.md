@@ -1,5 +1,3 @@
-<img src="./assets/logo.svg" width="56" height="105" alt="" />
-
 # reflect
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
@@ -21,7 +19,7 @@ doesn't just tack it on the end: it edits the entry that's already there,
 merges near-duplicates, deletes what's no longer true, and writes new notes
 lean enough to be worth the tokens they'll cost every session that loads them.
 
-It also knows that not every lesson is *yours*. Some belong to whoever else
+It also knows that not every lesson is _yours_. Some belong to whoever else
 touches this repo. "Tests silently no-op if you don't run them from the
 workspace root" isn't a fact about you — it's a fact about the codebase, and
 it should live in `CLAUDE.md` where any agent that opens the repo will see
@@ -71,7 +69,7 @@ command.
 forward: token-wasting detours, reusable workflows, blockers and how they got
 unstuck, wrong assumptions that had to be corrected, and feedback you gave on
 how it should work. Then it filters hard — a candidate only survives if it's
-both *recurring* (it'll plausibly come up again) and *non-obvious* (you
+both _recurring_ (it'll plausibly come up again) and _non-obvious_ (you
 couldn't just re-derive it from reading a file). Everything else gets
 dropped, on purpose, including anything borderline.
 
@@ -135,16 +133,16 @@ The most recent benchmark, in
 version of `SKILL.md` against the pre-rewrite one, same 7 fixtures, same
 model (`claude-opus-4-8`), 14 runs total:
 
-| Eval | Checks that... | Current | Pre-rewrite |
-|---|---|---|---|
-| 1. acme-api-auth-detour | a real detour gets saved as one lean entry | 4/4 | 4/4 |
-| 2. trivial-readme-typo | a boring session gets no memory at all | 3/3 | 3/3 |
-| 3. already-covered-npm-test | an existing topic gets `EDIT`ed, not duplicated | 3/3 | 3/3 |
-| 4. stale-deploy-pipeline | a contradicted memory gets fixed or dropped | 3/3 | 3/3 |
-| 5. ask-dont-guess-feedback | personal feedback stays in memory, doesn't over-route | 3/3 | 3/3 |
-| 6. team-convention-atref-subfile | a repo convention lands in the right `@`-ref sub-file | 4/4 | 1/4 |
-| 7. memory-off-agents-md | still finds `AGENTS.md` with auto-memory off | 4/4 | 2/4 |
-| **Total** | | **100%** | **82%** |
+| Eval                             | Checks that...                                        | Current  | Pre-rewrite |
+| -------------------------------- | ----------------------------------------------------- | -------- | ----------- |
+| 1. acme-api-auth-detour          | a real detour gets saved as one lean entry            | 4/4      | 4/4         |
+| 2. trivial-readme-typo           | a boring session gets no memory at all                | 3/3      | 3/3         |
+| 3. already-covered-npm-test      | an existing topic gets `EDIT`ed, not duplicated       | 3/3      | 3/3         |
+| 4. stale-deploy-pipeline         | a contradicted memory gets fixed or dropped           | 3/3      | 3/3         |
+| 5. ask-dont-guess-feedback       | personal feedback stays in memory, doesn't over-route | 3/3      | 3/3         |
+| 6. team-convention-atref-subfile | a repo convention lands in the right `@`-ref sub-file | 4/4      | 1/4         |
+| 7. memory-off-agents-md          | still finds `AGENTS.md` with auto-memory off          | 4/4      | 2/4         |
+| **Total**                        |                                                       | **100%** | **82%**     |
 
 Cases 1–5 pass either way — the rewrite didn't disturb anything that already
 worked, it just costs a little more to run it (168.9s / 38.1k tokens on
