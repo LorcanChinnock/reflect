@@ -120,14 +120,9 @@ have to be switched on — a team-durable lesson can still land as a
 session, `reflect` says so and does nothing. That's a normal outcome, not a
 failure of the skill.
 
-The companion hook (`hooks/reflect-capture.sh`, wired up in this repo's
-`.claude/settings.json`) is optional. Without it, `reflect` still works — it
-just can't tell whether context was compacted, so on a long session it falls
-back to a more conservative, partial-results mode instead of rescanning the
-transcript. If your install method doesn't carry `hooks/` and
-`.claude/settings.json` along with `SKILL.md`, copy both into the target
-project (or `~/.claude/` for a global install) to get the rescan behavior
-there too.
+Context-rot recovery (below) needs nothing beyond `SKILL.md` itself — it reads
+Claude Code's own on-disk session transcript, so there's no companion file to
+copy and nothing extra to wire up after `npx skills add`.
 
 ## Reliability & evals
 
@@ -209,15 +204,15 @@ sitting in context when it runs; a forked subagent starts with neither, so it
 would have nothing real to reflect on and would either come back empty or
 invent something.
 
-The one exception is deliberate, not a loophole: when a companion hook (see
-below) records that context was compacted mid-session, `reflect` spawns a
-single `Agent` — but pointed at the **on-disk transcript**, not run cold. That
-agent isn't reflecting on nothing; it's reading the same session's
-authoritative, pre-compaction history from a context that isn't rotted, which
-is exactly what the in-context copy can no longer give you. `reflect` still
-runs inline itself and still does all the filtering, routing, and proposing
-from its own context — the sub-agent is a fresh pair of eyes on ground truth,
-used only when the cheap path is already compromised.
+The one exception is deliberate, not a loophole: when the on-disk transcript
+shows a compaction boundary, `reflect` spawns a single `Agent` — but pointed
+at that **on-disk transcript**, not run cold. That agent isn't reflecting on
+nothing; it's reading the same session's authoritative, pre-compaction history
+from a context that isn't rotted, which is exactly what the in-context copy
+can no longer give you. `reflect` still runs inline itself and still does all
+the filtering, routing, and proposing from its own context — the sub-agent is
+a fresh pair of eyes on ground truth, used only when the cheap path is already
+compromised.
 
 ### Surviving context-rot at end-of-session
 
@@ -228,17 +223,18 @@ its own filter less reliably — the "recurring and non-obvious" bar in Section
 2 is weakest exactly when it matters most. A caveat alone doesn't fix that; it
 just labels the loss.
 
-So a small companion hook (`hooks/reflect-capture.sh`, wired up in this repo's
-`.claude/settings.json` under `PreCompact` and `SessionEnd`) stashes, per
-session, the transcript path and a compaction counter under
-`~/.claude/reflect/`, snapshotting the full transcript right before each
-compaction. `reflect` reads that stash first: no compaction recorded, it takes
-the cheap in-context path exactly as before; a compaction recorded, it spawns
-the fresh-context `Agent` above to rescan the untouched snapshot and hands the
-result back into the normal filter/route/propose pipeline. If the hook isn't
-installed but the session was clearly long enough to have been summarized
-anyway, `reflect` says so, raises the bar, and reports what it found as
-partial rather than pretending the in-context copy is complete.
+Claude Code's on-disk transcript for a session is append-only and survives
+compaction intact — it never gets rewritten down to the lossy summary, only
+the in-context copy does. Every compaction also leaves a marker line behind on
+disk. So `reflect` locates this session's transcript itself (derived from the
+working directory, under `~/.claude/projects/`) and counts those markers: none
+found, it takes the cheap in-context path exactly as before; one or more
+found, it spawns the fresh-context `Agent` above to rescan the untouched
+on-disk history and hands the result back into the normal
+filter/route/propose pipeline. If the transcript can't be located or read but
+the session was clearly long enough to have been summarized anyway, `reflect`
+says so, raises the bar, and reports what it found as partial rather than
+pretending the in-context copy is complete.
 
 ## Contributing
 

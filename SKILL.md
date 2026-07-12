@@ -31,20 +31,33 @@ candidate the filter rejected.
 
 ### Resolve the rot signal first
 
-Check `~/.claude/reflect/` for a capture-hook record matching this session
-(newest match by working directory if more than one exists). Its
-`compactions` count is a recorded fact from a companion hook, not something
-you infer or guess — trust it over any impression from skimming the
-transcript yourself.
+Claude Code's on-disk session transcript is append-only and keeps the
+complete history through any number of compactions — it's the ground truth,
+and locating it costs nothing but a Glob and a count, not a re-read of its
+content.
 
-- **No record, or `compactions` is `0`** → the in-context transcript is
-  complete. Take the cheap path.
-- **`compactions` is `1` or more** → context has already been lossily
-  summarized at least once. Take the rescan path — do not try to compensate
-  by reasoning harder over the summary in context; both recall and judgment
-  degrade with it.
-- **A record exists but its `snapshot_path`/`transcript_path` can't be read**
-  → treat as unresolved; see the fallback below.
+- Derive this session's project directory: take the current working
+  directory and replace every `/` with `-` (e.g. `/Users/you/dev/repo` →
+  `-Users-you-dev-repo`), under `~/.claude/projects/`. If that exact
+  directory doesn't exist, `Glob` `~/.claude/projects/*/` and use the one
+  containing the most recently modified `*.jsonl`.
+- `Glob` `*.jsonl` in that directory; the newest by modification time is this
+  session's transcript (it's the one being actively written).
+- `Grep` that file for `"subtype":"compact_boundary"` and count the matches —
+  that count is a recorded fact, not something you infer from skimming the
+  transcript yourself. This only counts lines; it doesn't pull transcript
+  content into your context.
+- **Count is `0`** → the in-context transcript is complete. Take the cheap
+  path.
+- **Count is `1` or more** → context has already been lossily summarized at
+  least once. Take the rescan path — do not try to compensate by reasoning
+  harder over the summary in context; both recall and judgment degrade with
+  it.
+- **The transcript can't be located, or the project directory is ambiguous
+  (e.g. more than one plausibly-current session)** → treat as unresolved; see
+  the fallback below. Guessing wrong here is worse than admitting you don't
+  know, so an ambiguous match degrades to the fallback rather than picking
+  one.
 
 ### Cheap path (no re-reads) — the default
 
@@ -67,9 +80,8 @@ Scan the session for, in priority order:
 
 ### Rescan path — when compaction was recorded
 
-Spawn one `Agent` pointed at the record's `snapshot_path` (fall back to
-`transcript_path` if no snapshot was taken) to read the complete,
-pre-compaction transcript on disk from a clean context — it has none of the
+Spawn one `Agent` pointed at the located on-disk transcript to read the
+complete, pre-compaction history from a clean context — it has none of the
 rot yours does. Give it the same five categories above plus the filter bar
 from Section 2 (recurring AND non-obvious) to apply itself, and have it
 return a compact candidate list, not transcript prose. Continue at Section 2
@@ -83,12 +95,11 @@ caveat to bury.
 
 ### Fallback — rot signal unresolved
 
-No hook installed, or the record/snapshot can't be read, but the session was
-clearly long enough for context to have been summarized anyway: don't quietly
-treat the in-context transcript as reliable. Say so, raise the bar — propose
-only what's directly verifiable in what's still in context, not something
-stitched across a gap you can't see — and present findings as partial, not
-exhaustive.
+The transcript couldn't be located or read, but the session was clearly long
+enough for context to have been summarized anyway: don't quietly treat the
+in-context transcript as reliable. Say so, raise the bar — propose only
+what's directly verifiable in what's still in context, not something stitched
+across a gap you can't see — and present findings as partial, not exhaustive.
 
 ### Either path
 
