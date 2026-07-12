@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0](https://github.com/LorcanChinnock/reflect/compare/v1.1.0...v1.2.0) (2026-07-12)
+
+
+### Features
+
+* add allowed-tools, evals harness, and reliability docs ([3cd2c78](https://github.com/LorcanChinnock/reflect/commit/3cd2c78cade511de7a327c550ebad5e148e8eda4))
+* add reflect skill ([e71a0dd](https://github.com/LorcanChinnock/reflect/commit/e71a0dd9d3105a728cd4a8fbcbe425dff75d4c41))
+* recover from end-of-session context-rot via transcript rescan ([340c0bc](https://github.com/LorcanChinnock/reflect/commit/340c0bc5a4dc52cf898115f9005049a06f9b58c3))
+* route durable lessons to repo project-instructions file, not just memory ([124fdb3](https://github.com/LorcanChinnock/reflect/commit/124fdb3b4efe3e4c05b3bc03bb0576af76751c4b))
+
 ## [1.1.0](https://github.com/LorcanChinnock/reflect/compare/v1.0.0...v1.1.0) (2026-07-12)
 
 
