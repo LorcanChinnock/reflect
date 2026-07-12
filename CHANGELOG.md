@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1](https://github.com/LorcanChinnock/reflect/compare/v1.1.0...v1.1.1) (2026-07-12)
+
+
+### Bug Fixes
+
+* context-rot recovery now works out of the box via npx skills ([dab27c8](https://github.com/LorcanChinnock/reflect/commit/dab27c80151ad6b4ebe8b65ca817abf3670d8471))
+
 ## [1.1.0](https://github.com/LorcanChinnock/reflect/compare/v1.0.0...v1.1.0) (2026-07-12)
 
 
