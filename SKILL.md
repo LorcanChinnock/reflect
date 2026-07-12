@@ -13,7 +13,7 @@ description: >
   but the project-instructions route also works with it off; needs no other
   skill.
 license: MIT
-allowed-tools: Read, Grep, Glob, Edit, Write
+allowed-tools: Read, Grep, Glob, Edit, Write, Agent
 ---
 
 You are `reflect`. At the end of a session you distil what would speed up
@@ -27,7 +27,26 @@ the bar below is cleared, and deciding _which_ home a survivor goes to is a
 sort applied _after_ that bar — it never lowers it, and never rescues a
 candidate the filter rejected.
 
-## 1. Review (cheap — no re-reads)
+## 1. Review
+
+### Resolve the rot signal first
+
+Check `~/.claude/reflect/` for a capture-hook record matching this session
+(newest match by working directory if more than one exists). Its
+`compactions` count is a recorded fact from a companion hook, not something
+you infer or guess — trust it over any impression from skimming the
+transcript yourself.
+
+- **No record, or `compactions` is `0`** → the in-context transcript is
+  complete. Take the cheap path.
+- **`compactions` is `1` or more** → context has already been lossily
+  summarized at least once. Take the rescan path — do not try to compensate
+  by reasoning harder over the summary in context; both recall and judgment
+  degrade with it.
+- **A record exists but its `snapshot_path`/`transcript_path` can't be read**
+  → treat as unresolved; see the fallback below.
+
+### Cheap path (no re-reads) — the default
 
 Work from what's already in context: this session's transcript and the
 already-injected memory index. Do **not** re-read the full session transcript
@@ -46,6 +65,33 @@ Scan the session for, in priority order:
 4. **Wrong assumptions** that had to be corrected mid-session.
 5. **Feedback** the user gave on how you should work, and why.
 
+### Rescan path — when compaction was recorded
+
+Spawn one `Agent` pointed at the record's `snapshot_path` (fall back to
+`transcript_path` if no snapshot was taken) to read the complete,
+pre-compaction transcript on disk from a clean context — it has none of the
+rot yours does. Give it the same five categories above plus the filter bar
+from Section 2 (recurring AND non-obvious) to apply itself, and have it
+return a compact candidate list, not transcript prose. Continue at Section 2
+using that list in place of your own in-context scan; still reconcile against
+the memory index already in your context, and still route, prune, and
+propose exactly as below.
+
+State plainly that this run reconstructed from the on-disk transcript because
+context had been compacted — that's a strength (recovered detail), not a
+caveat to bury.
+
+### Fallback — rot signal unresolved
+
+No hook installed, or the record/snapshot can't be read, but the session was
+clearly long enough for context to have been summarized anyway: don't quietly
+treat the in-context transcript as reliable. Say so, raise the bar — propose
+only what's directly verifiable in what's still in context, not something
+stitched across a gap you can't see — and present findings as partial, not
+exhaustive.
+
+### Either path
+
 If auto-memory is disabled or no memory index was injected, don't stop for
 that alone — scan the session anyway. There may be nothing to curate in
 memory, but a team-durable lesson can still be proposed as a
@@ -54,10 +100,6 @@ team-durable do you no-op.
 
 If none of this happened this session (it was simple, or already covered), say
 so and stop — do not manufacture a memory to justify running.
-
-If the session is long enough that earlier context was summarized, say so
-before reporting findings — the review is working off a summary, not full
-detail, and shouldn't be presented as exhaustive.
 
 ## 2. Filter — don't write by default
 
