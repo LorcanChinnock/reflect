@@ -7,11 +7,12 @@ description: >
   assumptions, and undocumented quirks, filters hard, then routes each
   survivor to its home: lean personal auto-memories (editing, merging, and
   deleting as readily as adding) or, for a durable convention the whole repo
-  needs, a proposed edit to the repo's project-instructions file (CLAUDE.md,
-  an @-referenced sub-file, or AGENTS.md) to land via a normal PR. Proposes a
-  concise change list before writing. Works best with Claude Code auto-memory,
-  but the project-instructions route also works with it off; needs no other
-  skill.
+  needs, a proposed edit that lands via a normal PR — amending a fitting
+  existing doc (an @-referenced sub-file, or an AGENTS.md section) when one
+  exists, otherwise a lean .claude/memories/ note @-imported from CLAUDE.md,
+  never inlined into CLAUDE.md's own body. Proposes a concise change list
+  before writing. Works best with Claude Code auto-memory, but the
+  project-instructions route also works with it off; needs no other skill.
 license: MIT
 allowed-tools: Read, Grep, Glob, Edit, Write, Agent
 ---
@@ -145,15 +146,26 @@ applies:
 
 - **A durable convention for working in _this repo_** — build/test/deploy
   commands, architecture rules, a repo-specific "always do X when working in
-  this codebase" — belongs in the repo's shared, version-controlled
-  project-instructions file, not personal memory. First detect how the repo
-  structures that file: if `CLAUDE.md` `@`-references sub-files, route to the
-  right sub-file (or propose a new topical one and `@`-reference it from
-  `CLAUDE.md`); otherwise use the root `CLAUDE.md`; if the repo has no
-  `CLAUDE.md` but has an `AGENTS.md`, use that. Read/Grep the resolved target
-  first and amend the right existing section rather than duplicate a rule
-  already there. Propose the edit per Section 7 — you write it to the working
-  tree, the user lands it via a normal PR.
+  this codebase" — belongs in the repo's shared, version-controlled project
+  instructions, not personal memory. Route it in this order:
+  1. **Fitting existing section** — an `@`-referenced sub-file `CLAUDE.md`
+     already points at, or (in an `AGENTS.md`-only repo) a section of
+     `AGENTS.md`, that already covers this topic → Read/Grep it first, then
+     amend that section in place rather than duplicate a rule already there.
+  2. **No fitting section, `CLAUDE.md`-based repo** (has one, or has neither
+     file) → a **project memory**, not the `CLAUDE.md` body: write
+     `.claude/memories/<slug>.md`, make sure `.claude/memories/index.md`
+     `@`-imports it, and make sure `CLAUDE.md` ends with a single
+     `@.claude/memories/index.md` line — create whichever of `CLAUDE.md` /
+     `index.md` is missing, but never add the note text to `CLAUDE.md`'s own
+     body. Check `index.md` first so a repeat topic edits its existing memory
+     file instead of adding a duplicate.
+  3. **No fitting section, `AGENTS.md`-only repo** → add a new section to
+     `AGENTS.md` directly (`@`-imports are a `CLAUDE.md`-only mechanism, not
+     available here).
+
+  Propose the edit per Section 7 — you write it to the working tree, the user
+  lands it via a normal PR.
 - **Everything else** — personal working style, facts about the user, and
   non-obvious gotchas about _external_ tools/APIs/services (even undocumented
   ones) — is personal or session-level → new auto-memory, as today.
@@ -171,8 +183,15 @@ superseded, trim a file that's grown bloated, repair a dangling
 filename slug. Roll any such fix into the change list below even if unrelated
 to a new candidate you're proposing.
 
-If auto-memory is off, skip this pass — there's no store to prune. It never
-applies to the project-instructions file either way.
+This pass also covers any `.claude/memories/*.md` file touched this session —
+it's reflect-authored, so the same landfill risk applies there as in
+auto-memory. It never applies to a hand-authored `CLAUDE.md`/`AGENTS.md`
+section or `@`-referenced sub-file — those are maintainer-owned; reflect
+amends a specific section when routing a new candidate there, never prunes
+one unprompted.
+
+If auto-memory is off, skip the auto-memory half of this pass — there's no
+store to prune — but still prune any `.claude/memories/` files touched.
 
 ## 6. Match house style, stay lean
 
@@ -185,11 +204,23 @@ sections) — if a memory is creeping past that, it's a sign to split, trim, or
 fold it into an existing file instead. Update the MEMORY.md index line for
 anything created, renamed, or deleted.
 
-For a project-instructions proposal, match the target file's existing
-structure instead — including its `@`-reference layout if it splits into
-sub-files. Keep it to the leanest form the file already uses (a line or a
-bullet), state the convention imperatively, and don't restate anything
-already derivable from the code, scripts, or an existing rule in that file.
+For a project-instructions proposal that amends an existing section (routing
+case 1 or 3 in Section 4), match the target file's existing structure —
+including its `@`-reference layout if it splits into sub-files. Keep it to
+the leanest form the file already uses (a line or a bullet), state the
+convention imperatively, and don't restate anything already derivable from
+the code, scripts, or an existing rule in that file.
+
+For a project memory (routing case 2 — no fitting section existed), keep it
+plain: no auto-memory-style frontmatter — `@`-imported files aren't parsed
+for it, so it would just be noise — a short heading naming the topic, and the
+concrete convention in a sentence or two, same density as a lean auto-memory
+body. `.claude/memories/index.md` is a flat list of one `@`-import line per
+memory file (`@.claude/memories/<slug>.md`) under a short heading — add a
+line for a new file, never restate its content there. `CLAUDE.md` itself
+carries exactly one line, `@.claude/memories/index.md`, appended at the
+bottom if not already present — never more than one, and never the memory
+text itself.
 
 ## 7. Propose, then apply
 
@@ -203,9 +234,15 @@ Proposed memory changes:
   FIX   <slug> — <wikilink / name-drift / length fix>
 
 Proposed project-instructions changes (you land these via a normal PR):
-  CLAUDE  <resolved target file, e.g. CLAUDE.md or docs/build.md or AGENTS.md>
-          › <existing heading | "new section: X"> [+ @-ref from CLAUDE.md if new sub-file]
+  CLAUDE  <existing @-ref sub-file, e.g. docs/build.md, or AGENTS.md>
+          › <existing heading>
           <verbatim text to add or change>
+          why team-durable: <reason everyone working in this repo needs it>
+
+  MEMORY  .claude/memories/<slug>.md  [+ new file]
+          <verbatim note text>
+          wiring: + .claude/memories/index.md › @.claude/memories/<slug>.md
+                  [+ CLAUDE.md › @.claude/memories/index.md, if not already present]
           why team-durable: <reason everyone working in this repo needs it>
 ```
 

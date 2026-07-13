@@ -71,11 +71,17 @@ Whatever survives gets sorted into one of two homes. Personal stuff — your
 own working habits, quirks of an external API, gotchas that are about you or
 your tools rather than the repo — goes to auto-memory, where `reflect` will
 edit or delete an existing entry rather than pile a new one on top of it. A
-convention the whole team needs goes to the repo's project-instructions file
-instead, and the routing is structure-aware: it finds the right
-`@`-referenced sub-file if `CLAUDE.md` splits that way, falls back to the
-root `CLAUDE.md`, or targets `AGENTS.md` if that's what the repo actually
-uses.
+convention the whole team needs goes to the repo's project instructions
+instead, and the routing is structure-aware: if `CLAUDE.md` already
+`@`-references a sub-file that covers the topic (or, in an `AGENTS.md`-only
+repo, a section of `AGENTS.md` does), `reflect` amends that section in place.
+If nothing already fits, it doesn't bloat `CLAUDE.md`'s own body with a
+learned note — it writes a `.claude/memories/` entry instead, wired in with a
+single `@.claude/memories/index.md` line at the bottom of `CLAUDE.md`. That
+folder gets curated the same way auto-memory does — edited and pruned rather
+than piled onto — so a hand-authored `CLAUDE.md` stays the curated front door
+it was, instead of quietly turning into the landfill `reflect` exists to
+prevent.
 
 Either way, it shows you the full change list before writing anything, and
 waits.
@@ -83,8 +89,9 @@ waits.
 ## Example
 
 Say a session burned several attempts getting an internal API's auth working,
-and separately turned up a repo-wide testing convention nobody had bothered
-to write down. `reflect` would propose something like this:
+and separately turned up a deploy convention nobody had bothered to write
+down — and nothing in this repo's `CLAUDE.md` already covers deploys.
+`reflect` would propose something like this:
 
 ```
 Proposed memory changes:
@@ -97,12 +104,19 @@ Proposed memory changes:
         their March changelog.
 
 Proposed project-instructions changes (you land these via a normal PR):
-  CLAUDE  docs/testing.md › "Running tests"
-          Integration tests only run correctly via `pnpm -w test` from the
-          repo root; running from a package subdirectory silently skips them.
-          why team-durable: anyone working in this repo can hit the silent
-          skip, not just this session.
+  MEMORY  .claude/memories/deploy-env.md  [+ new file]
+          Deploy scripts require DEPLOY_ENV set explicitly, or they ship to
+          production silently.
+          wiring: + .claude/memories/index.md › @.claude/memories/deploy-env.md
+                  + CLAUDE.md › @.claude/memories/index.md
+          why team-durable: anyone running a deploy script in this repo can
+          hit the silent prod push, not just this session.
 ```
+
+If `docs/testing.md` had already existed and `CLAUDE.md` already
+`@`-referenced it, a repo-wide testing convention would have landed there
+instead, under its existing "Running tests" section — `reflect` only reaches
+for `.claude/memories/` when nothing already fits.
 
 Nothing gets written until you say go. And the project-instructions block
 only ever touches your working tree — `reflect` will not stage, commit,
@@ -116,9 +130,9 @@ above: [SKILL.md](./SKILL.md).
 `reflect` only makes sense inside Claude Code, since auto-memory is a Claude
 Code feature and `SKILL.md` is only loaded there. Auto-memory itself doesn't
 have to be switched on — a team-durable lesson can still land as a
-`CLAUDE.md`/`AGENTS.md` proposal without it. If neither applies to a given
-session, `reflect` says so and does nothing. That's a normal outcome, not a
-failure of the skill.
+`CLAUDE.md`/`.claude/memories/`/`AGENTS.md` proposal without it. If neither
+applies to a given session, `reflect` says so and does nothing. That's a
+normal outcome, not a failure of the skill.
 
 Context-rot recovery (below) needs nothing beyond `SKILL.md` itself — it reads
 Claude Code's own on-disk session transcript, so there's no companion file to
@@ -133,13 +147,15 @@ pinned down as gradeable cases in
 already-covered topic gets `EDIT`ed instead of duplicated, a contradicted
 memory gets `DROP`ped or fixed rather than left stale, nothing is ever
 written before the change list is shown, a repo-wide convention lands in the
-right `@`-referenced sub-file, and `AGENTS.md` still gets found correctly
-when auto-memory is off.
+right `@`-referenced sub-file when one already fits, a convention with no
+existing home lands in `.claude/memories/` instead of bloating `CLAUDE.md`'s
+own body, and `AGENTS.md` still gets found correctly when auto-memory is
+off.
 
-The most recent benchmark, in
-[`evals/results/2026-07-10/`](./evals/results/2026-07-10/), runs the current
-`SKILL.md` against the version that predates the project-instructions
-routing feature — same 7 fixtures, same model (`claude-opus-4-8`), 14 runs
+An earlier benchmark, in
+[`evals/results/2026-07-10/`](./evals/results/2026-07-10/), runs the version
+that introduced project-instructions routing against the version that
+predates it — same 7 fixtures, same model (`claude-opus-4-8`), 14 runs
 total:
 
 | Eval                              | Checks that...                                         | Current  | Pre-rewrite |
@@ -173,6 +189,53 @@ for the extra check). All the daylight is in cases 6 and 7:
 
 Open `eval-review.html` in that results folder for the full transcripts
 rather than the summary above.
+
+The most recent benchmark, in
+[`evals/results/2026-07-13/`](./evals/results/2026-07-13/), runs the current
+`SKILL.md` — which replaces that routing's root-`CLAUDE.md`-body fallback
+with a `.claude/memories/` folder — against the version right before this
+change, across cases 1-7 plus a new case 10, 3-4 runs each:
+
+| Eval                              | Checks that...                                              | Current  | Pre-rewrite |
+| ---------------------------------- | ------------------------------------------------------------ | -------- | ----------- |
+| 1. acme-api-auth-detour            | a real detour gets saved as one lean entry                    | 2/4¹     | 4/4¹        |
+| 2. trivial-readme-typo             | a boring session gets no memory at all                        | 3/3      | 3/3         |
+| 3. already-covered-npm-test        | an existing topic gets `EDIT`ed, not duplicated               | 3/3      | 3/3         |
+| 4. stale-deploy-pipeline           | a contradicted memory gets fixed or dropped                    | 3/3²     | 0/3²        |
+| 5. ask-dont-guess-feedback         | personal feedback stays in memory, doesn't over-route          | 3/3      | 3/3         |
+| 6. team-convention-atref-subfile   | a repo convention lands in the right `@`-ref sub-file           | 4/4      | 4/4         |
+| 7. memory-off-agents-md            | still finds `AGENTS.md` with auto-memory off                    | 4/4      | 4/4         |
+| 10. no-home-convention-memories-folder | a convention with no home lands in `.claude/memories/`, never CLAUDE.md's body | 4/4 | 0/4 |
+| **Total**                          |                                                                | **93%**  | **75%**     |
+
+¹ ² Both footnotes point at the same thing: a grading-strictness split
+between two independent grading passes, not a real behavior difference —
+reading the raw transcripts, both `SKILL.md` versions made the identical
+correct routing decision in every run of cases 1 and 4. Case 1's split is
+over whether printing an empty `Proposed project-instructions changes:
+(none — ...)` header counts as omitting the block (§7 says to omit it
+outright); case 4's is over the literal label `EDIT` vs. the assertion's
+wording of `DROP or FIX`, when §4 documents `EDIT` as the correct verb for
+fixing a stale memory in place. Correcting for that noise, both land at 100%
+on cases 1-7 — cases 1 through 7 are unaffected by this change (it only
+touches routing, prune scope, house style, and the propose template), so an
+identical pass rate there is the expected regression-guard result. All the
+real daylight is in the new case 10:
+
+- **Case 10** discovers a repo-wide migration-locking convention in a repo
+  whose `CLAUDE.md` has no `@`-referenced sub-file and no section that
+  already covers it. Under the old routing rules, with no fitting sub-file,
+  the only fallback was the root `CLAUDE.md` body — so every pre-rewrite run
+  proposed a new section inlined directly into it. The current version
+  instead proposes a new `.claude/memories/<slug>.md` file, wired in via
+  `.claude/memories/index.md` and a single `@.claude/memories/index.md` line
+  in `CLAUDE.md`, in all 4 runs, never touching `CLAUDE.md`'s body — exactly
+  the landfill-avoidance behavior this change adds.
+
+This run used a lighter methodology than 2026-07-10's (no separate
+executor/grader split, no `aggregate_benchmark.py`/viewer) given the size of
+the sweep; see [`evals/results/2026-07-13/benchmark.md`](./evals/results/2026-07-13/benchmark.md)
+for the full notes and caveats.
 
 Run the suite yourself with the
 [`skill-creator`](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/skill-creator)

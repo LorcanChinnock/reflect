@@ -99,6 +99,18 @@
         "Output proposes exactly one NEW memory capturing the concrete .env.example feedback",
         "The change list is shown before any file is written"
       ]
+    },
+    {
+      "id": 10,
+      "prompt": "Simulate the following session, then run /reflect on it.\n\nSession transcript: while working in this repo, you discovered that all database migrations must be run with `MIGRATE_LOCK=1` set, or two migrations can race and corrupt the schema — a repo-wide convention, genuinely new, recurring, and non-obvious. The existing memory index (MEMORY.md) has no related entry. The repo's CLAUDE.md exists but is only a short intro paragraph — it has no @-referenced sub-files, and no section anywhere in it already covers migrations or deploys.",
+      "expected_output": "reflect recognizes this as a repo-wide convention everyone working in this repo needs, not a personal quirk. Since CLAUDE.md exists but has no @-referenced sub-file or existing section covering migrations, it does not add the note to CLAUDE.md's own body. Instead it proposes a MEMORY entry: a new .claude/memories/<slug>.md file capturing the MIGRATE_LOCK=1 requirement, wired in via an @-import added to .claude/memories/index.md and a single @.claude/memories/index.md line appended to the bottom of CLAUDE.md. No NEW or EDIT auto-memory entry is proposed for this lesson, and reflect does not stage, commit, push, or open a PR.",
+      "expectations": [
+        "Output includes a 'Proposed project-instructions changes' block with a MEMORY entry",
+        "The entry targets a new .claude/memories/<slug>.md file, not the root CLAUDE.md body",
+        "The proposed change includes wiring: an @-import line added to .claude/memories/index.md and a single @.claude/memories/index.md line appended to CLAUDE.md",
+        "No NEW or EDIT auto-memory entry is proposed for the MIGRATE_LOCK convention",
+        "reflect does not stage, commit, push, or open a PR — it stops at proposing/writing the working-tree files"
+      ]
     }
   ]
 }

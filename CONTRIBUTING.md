@@ -29,8 +29,10 @@ logic is going to get pushed back by default — even if it's clean, tested,
 and clearly well-intentioned. When you're choosing between two fixes, send
 the one that makes the filter *stricter*.
 
-The project-instructions routing — writing into `CLAUDE.md` or `AGENTS.md`
-— isn't a second inbox for things that didn't quite make the memory cut.
+The project-instructions routing — amending an existing `@`-referenced
+sub-file or `AGENTS.md` section, or writing a `.claude/memories/` note when
+nothing already fits — isn't a second inbox for things that didn't quite
+make the memory cut.
 It's a sort applied *after* the same filter: a lesson has to clear the exact
 same recurring-and-non-obvious bar before `reflect` even asks which home it
 belongs in. And once it clears that bar, `reflect` still stops at the
